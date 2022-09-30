@@ -1,63 +1,53 @@
 
-var filterStrength = 20;
-var frameTime = 0, lastLoop = new Date, thisLoop;
 
-var canvas = document.getElementById('canvas');
-var ctx = canvas.getContext('2d');
+var Painter = {
+	init:function(canvas_id) {
+		this.canvas = document.getElementById(canvas_id);
+		this.ctx = this.canvas.getContext('2d');
+		this.posX=0;
+		this.posY=0;
+		this.lastX=0;
+		this.lastY=0;
+		this.behavior();		
+	},
+	behavior:function() {
+		var _this=this;
+		
+		//draw line
+		this.canvas.onmousemove = function(event){
+			_this.lastX = _this.posX;
+			_this.lastY = _this.posY;
+			_this.posX = event.pageX;
+			_this.posY = event.pageY;
+			_this.draw();
+		};		
+		//draw canvas
+		document.body.onkeyup = function(e) {
+		  if (e.key == " " || e.code == "Space" || e.keyCode == 32 ) {		  	
+		  	_this.ctx.fillStyle = "white";
+		  	_this.ctx.rect(0,0,_this.canvas.width,_this.canvas.height);  
+		  	_this.ctx.fill();		    
+		  }
+		};	
+				
+	},
+	draw:function() {
+			var _this=this;
+			var r= Math.floor(Math.random() * 254);
+			var g= Math.floor(Math.random() * 254);
+			var b= Math.floor(Math.random() * 254);
+			this.ctx.strokeStyle = 'rgba('+r+','+g+','+b+',1)';
+			this.ctx.lineWidth = 20;
+			this.ctx.beginPath();       
+			this.ctx.moveTo(_this.lastX, _this.lastY);	
+			this.ctx.lineTo(_this.posX,_this.posY);  	
+			this.ctx.stroke();
+	}
 
+};
 
-var posX , posY;
-var lastX, lastY;
-
-function draw(){
-	
-
-	var r= Math.floor(Math.random() * 254);
-	var g= Math.floor(Math.random() * 254);
-	var b= Math.floor(Math.random() * 254);
-	ctx.strokeStyle = 'rgba('+r+','+g+','+b+',1)';
-	ctx.lineWidth = 20;
-
-	ctx.beginPath();       
-	ctx.moveTo(lastX, lastY);	
-	ctx.lineTo(posX,posY);  	
-	ctx.stroke();          
-
-	  var thisFrameTime = (thisLoop=new Date) - lastLoop;
-	  frameTime+= (thisFrameTime - frameTime) / filterStrength;
-	  lastLoop = thisLoop;
-
-	// window.requestAnimationFrame(draw);
-}
-
-// window.requestAnimationFrame(draw);
-
-document.querySelector('canvas').onmousemove = function(event){
-	lastX = posX;
-	lastY = posY;
-	posX = event.pageX;
-	posY = event.pageY;
-	draw();
-}
-
-document.body.onkeyup = function(e) {
-  if (e.key == " " ||
-      e.code == "Space" ||      
-      e.keyCode == 32      
-  ) {
-  	console.log('clear')
-  	ctx.fillStyle = "white";
-  	ctx.rect(0,0,canvas.width,canvas.height);  
-  	ctx.fill();
-    
-  }
-}
+Painter.init('canvas');
 
 
-// Report the fps only every second, to only lightly affect measurements
-var fpsOut = document.getElementById('fps');
-setInterval(function(){
-  fpsOut.innerHTML = (1000/frameTime).toFixed(1) + " fps";
-},1000);
 
 
