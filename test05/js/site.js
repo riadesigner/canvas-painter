@@ -43,13 +43,20 @@ var Painter = {
 				_this.lastX = _this.posX;
 				_this.lastY = _this.posY;
 				_this.posX = (event.pageX-_this.p_offset.left) / _this.m_offset;
-				_this.posY = (event.pageY-_this.p_offset.top) / _this.m_offset;
+				_this.posY = (event.pageY-_this.p_offset.top) / _this.m_offset;				
 				_this.draw();
 			}
-		};		
+		};	
+
+		this.$canvas[0].onmouseleave = function(event){
+			_this.DRAW_MODE = false;
+		};			
+
 
 		this.$canvas[0].onmousedown = function(event){
 			_this.DRAW_MODE = true;
+			_this.posX = (event.pageX-_this.p_offset.left) / _this.m_offset;
+			_this.posY = (event.pageY-_this.p_offset.top) / _this.m_offset;
 		};				
 
 		document.body.onmouseup = function(){
@@ -106,24 +113,34 @@ var Painter = {
 		this.ctx2 = new canvas2pdf.PdfContext(blobStream());
 	},
 	draw:function() {
-		var _this=this;
+		this.draw_line(this.ctx);
+		this.draw_line(this.ctx2);
+		this.draw_circle(this.ctx);
+		this.draw_circle(this.ctx2);		
+	},
+	draw_line:function(ctx) {		
 		var r= Math.floor(Math.random() * 254);
 		var g= Math.floor(Math.random() * 254);
 		var b= Math.floor(Math.random() * 254);
-		this.ctx.strokeStyle = 'rgba('+r+','+g+','+b+',1)';
-		this.ctx.lineWidth = 20;
-		this.ctx.beginPath();       
-		this.ctx.moveTo(_this.lastX, _this.lastY);	
-		this.ctx.lineTo(_this.posX,_this.posY);  	
-		this.ctx.stroke();
-
-		this.ctx2.strokeStyle = 'rgba('+r+','+g+','+b+',1)';
-		this.ctx2.lineWidth = 20;
-		this.ctx2.beginPath();       
-		this.ctx2.moveTo(_this.lastX, _this.lastY);	
-		this.ctx2.lineTo(_this.posX,_this.posY);  	
-		this.ctx2.stroke();
-
+		ctx.strokeStyle = 'rgba('+r+','+g+','+b+',1)';
+		ctx.lineWidth = 20;
+		ctx.beginPath();       
+		ctx.moveTo(this.lastX, this.lastY);	
+		ctx.lineTo(this.posX,this.posY);  	
+		ctx.stroke();
+	},
+	draw_circle:function(ctx) {
+		var r= Math.floor(Math.random() * 254);
+		var g= Math.floor(Math.random() * 254);
+		var b= Math.floor(Math.random() * 254);
+		var radius = 10;
+		ctx.beginPath();
+		ctx.arc(this.posX,this.posY, radius, 0, 2 * Math.PI, false);
+		ctx.fillStyle = 'rgba('+r+','+g+','+b+',1)';
+		ctx.fill();
+		ctx.lineWidth = 0;
+		ctx.strokeStyle = '#00000000';
+		ctx.stroke();	
 	}
 
 };
