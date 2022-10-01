@@ -113,8 +113,8 @@ var Painter = {
 		this.ctx2 = new canvas2pdf.PdfContext(blobStream());
 	},
 	draw:function() {
-		this.draw_line(this.ctx);
-		this.draw_line(this.ctx2);
+		// this.draw_line(this.ctx);
+		// this.draw_line(this.ctx2);
 		this.draw_circle(this.ctx);
 		this.draw_circle(this.ctx2);		
 	},
@@ -133,9 +133,8 @@ var Painter = {
 		var r= Math.floor(Math.random() * 254);
 		var g= Math.floor(Math.random() * 254);
 		var b= Math.floor(Math.random() * 254);		
-		// var h = Math.hypot(this.lastX - this.posX, this.lastY - this.posY);
-		var h = 10;
-		var radius = h;
+		var h = Math.hypot(this.lastX - this.posX, this.lastY - this.posY);
+		var radius = Math.min(h,30);
 		ctx.beginPath();
 		ctx.arc(this.posX,this.posY, radius, 0, 2 * Math.PI, false);
 		ctx.fillStyle = 'rgba('+r+','+g+','+b+',1)';
