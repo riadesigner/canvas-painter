@@ -15,7 +15,8 @@ var Painter = {
 		this.gCounterMax = 10;
 		
 		this.BRUSH = {
-			size:40			
+			size:40,
+			color:'#000000'
 		}
 
 
@@ -65,6 +66,7 @@ var Painter = {
 			_this.gCounter = 0;
 			_this.posX = (event.pageX-_this.p_offset.left) / _this.m_offset;
 			_this.posY = (event.pageY-_this.p_offset.top) / _this.m_offset;
+			_this.draw_start_cap();
 		};				
 
 		document.body.onmouseup = function(){
@@ -122,23 +124,31 @@ var Painter = {
 	},
 	draw:function() {
 		this.gCounter++;		
-		this.draw_line(this.ctx);
-		this.draw_line(this.ctx2);		
+		this.draw_line(this.ctx);		
 		this.draw_circle(this.ctx);
-		this.draw_circle(this.ctx2);	
-
 	},
-	draw_line:function(ctx) {		
+	draw_start_cap:function() {
+		this.draw_circle(this.ctx);		
+	},
+	get_color:function() {
+		// return this.get_color_rand();	
+		return this.BRUSH.color;
+	},
+	get_color_rand:function() {
 		var r= Math.floor(Math.random() * 254);
 		var g= Math.floor(Math.random() * 254);
 		var b= Math.floor(Math.random() * 254);
-		ctx.strokeStyle = 'rgba('+r+','+g+','+b+',1)';
+		return 'rgba('+r+','+g+','+b+',1)';
+	},
+	draw_line:function(ctx) {		
+		
+		ctx.strokeStyle = this.get_color();
 
 		var h = this.BRUSH.size;
 		// ctx.lineWidth = Math.min(h,this.gCounter);
 		var delta = Math.hypot(this.lastX - this.posX, this.lastY - this.posY);
-		if(delta<h/2) return false;
-		if(this.gCounter<this.gCounterMax)return false;
+		// if(delta<h/3) return false;
+		// if(this.gCounter<this.gCounterMax)return false;
 
 		ctx.lineWidth = h;
 		ctx.beginPath();       
@@ -147,20 +157,18 @@ var Painter = {
 		ctx.stroke();
 	},
 	draw_circle:function(ctx) {
-		var r= Math.floor(Math.random() * 254);
-		var g= Math.floor(Math.random() * 254);
-		var b= Math.floor(Math.random() * 254);		
+	
 		// var h = Math.hypot(this.lastX - this.posX, this.lastY - this.posY);
 		// var radius = Math.min(h,30);
 		var h = this.BRUSH.size/2;
-		if(this.gCounter<this.gCounterMax){
-			h -= (this.gCounterMax-this.gCounter);
-		}
+		// if(this.gCounter<this.gCounterMax){
+		// 	h -= (this.gCounterMax-this.gCounter);
+		// }
 		// var radius = Math.min(h,this.gCounter);
 		var radius = h;
 		ctx.beginPath();
 		ctx.arc(this.posX,this.posY, radius, 0, 2 * Math.PI, false);
-		ctx.fillStyle = 'rgba('+r+','+g+','+b+',1)';
+		ctx.fillStyle = this.get_color();
 		ctx.fill();
 		ctx.lineWidth = 0;
 		ctx.strokeStyle = '#00000000';
