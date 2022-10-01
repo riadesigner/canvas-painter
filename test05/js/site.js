@@ -11,7 +11,7 @@ var Painter = {
 		this.posY=0;
 		this.lastX=0;
 		this.lastY=0;
-		
+
 		this.pre_build();
 		this.recalc_size();
 		this.behavior();		
@@ -101,7 +101,7 @@ var Painter = {
 	clear:function(){
 		var _this=this;
 	  	this.ctx.fillStyle = "white";
-	  	this.ctx.rect(0,0,_this.canvas.width,_this.canvas.height);  
+	  	this.ctx.rect(0,0,_this.$canvas[0].width,_this.$canvas[0].height);  
 	  	this.ctx.fill();
 		this.ctx2 = new canvas2pdf.PdfContext(blobStream());
 	},
