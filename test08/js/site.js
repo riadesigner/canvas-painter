@@ -3,9 +3,14 @@
 var Painter = {
 	init:function(painter_id,w,h,params) {
 		this.$painter = $('#'+painter_id);
+		var params = params || {};
 		
-		this.PARAM = {w:w,h:h};
-		this.DRAW_MODE = false;
+		this.PARAM = $.extend({w:w,h:h},params);
+		this.TEXTURES = params.textures || [];
+		this.TEXTURES_LOADED = [];
+		this.DRAW_MODE = false;		
+
+		this.$statusbar = $('#'+this.PARAM.statusbar);
 
 		this.posX=0;
 		this.posY=0;
@@ -19,11 +24,40 @@ var Painter = {
 			color:'#000000'
 		}
 
-
-		this.pre_build();
+		this.pre_build();		
 		this.recalc_size();
 		this.behavior();		
+		this.textures_preload();
 
+	},
+	statusbar_show:function(msg){		
+		if(this.$statusbar.length){
+			this.$statusbar.html(msg);
+		}
+	},
+	show_background:function(){
+		var img = this.TEXTURES_LOADED[0]; 
+		this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);		
+	},
+	textures_loaded_all:function(){
+		return this.TEXTURES.length==this.TEXTURES_LOADED.length;
+	},
+	textures_preload:function(){
+		var _this=this;
+		this.TEXTURES_READY = false;		
+		if(this.TEXTURES.length){
+			for(var i in this.TEXTURES){				
+				var img = new Image();
+				img.src = this.TEXTURES[i];
+				img.onload = function(){					
+					_this.TEXTURES_LOADED.push(this);
+					if(_this.textures_loaded_all()){
+						// _this.show_background();	
+						_this.statusbar_show("all ready to draw");
+					}
+				}
+			}
+		}		
 	},
 	pre_build:function() {
 		
@@ -37,6 +71,7 @@ var Painter = {
 		this.ctx2 = new canvas2pdf.PdfContext(blobStream());		
 
 	},
+
 	recalc_size:function() {
 		var $p = this.$painter;
 		this.p_offset = {top:$p.offset().top,left:$p.offset().left};			
@@ -81,7 +116,7 @@ var Painter = {
 		  }
 		};	
 
-		document.getElementById('btn-save').onclick = function(){ _this.save_to_pdf();}	
+		// document.getElementById('btn-save').onclick = function(){ _this.save_to_pdf();}	
 
 	},
 	save_to_pdf:function(){
@@ -125,10 +160,11 @@ var Painter = {
 	draw:function() {
 		this.gCounter++;		
 		this.draw_line(this.ctx);		
-		this.draw_circle(this.ctx);
+
+		// this.draw_circle(this.ctx);
 	},
 	draw_start_cap:function() {
-		this.draw_circle(this.ctx);		
+		// this.draw_circle(this.ctx);		
 	},
 	get_color:function() {
 		// return this.get_color_rand();	
@@ -143,7 +179,8 @@ var Painter = {
 	draw_line:function(ctx) {		
 		
 		ctx.strokeStyle = this.get_color();
-
+		ctx.lineCap = 'round';
+		ctx.lineJoin = "round";
 		var h = this.BRUSH.size;
 		// ctx.lineWidth = Math.min(h,this.gCounter);
 		var delta = Math.hypot(this.lastX - this.posX, this.lastY - this.posY);
@@ -155,6 +192,11 @@ var Painter = {
 		ctx.moveTo(this.lastX, this.lastY);	
 		ctx.lineTo(this.posX,this.posY);  	
 		ctx.stroke();
+		ctx.save();
+		ctx.globalCompositeOperation='source-atop';
+		var img = this.TEXTURES_LOADED[0]; 
+		this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);				
+		ctx.restore();
 	},
 	draw_circle:function(ctx) {
 	
@@ -180,7 +222,7 @@ var Painter = {
 
 $(function(){
 
-	Painter.init('painter',1000,500);
+	Painter.init('painter',1000,500,{textures:["img/img1.jpg"],statusbar:'painter-status'});
 
  
 });
