@@ -153,10 +153,13 @@ var Painter = {
 	},
 	clear:function(){
 		var _this=this;
-	  	this.ctx.fillStyle = "white";
+	  	this.ctx.fillStyle = "#00000000";
+	  	this.ctx.save();
+	  	this.ctx.globalCompositeOperation='source-out';	  	
 	  	this.ctx.rect(0,0,_this.$canvas[0].width,_this.$canvas[0].height);  
 	  	this.ctx.fill();
-		this.ctx2 = new canvas2pdf.PdfContext(blobStream());
+	  	this.ctx.restore();
+		// this.ctx2 = new canvas2pdf.PdfContext(blobStream());
 	},
 	draw:function() {
 		this.gCounter++;		
