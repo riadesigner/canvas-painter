@@ -170,9 +170,8 @@ var Painter = {
 	draw_start_cap:function() {
 		// this.draw_circle(this.ctx);		
 	},
-	get_color:function() {
-		// return this.get_color_rand();	
-		return this.BRUSH.color;
+	get_color:function() {		
+		return "#000000";
 	},
 	get_color_rand:function() {
 		var r= Math.floor(Math.random() * 254);
@@ -183,6 +182,7 @@ var Painter = {
 	draw_line:function(ctx) {		
 		
 		ctx.strokeStyle = this.get_color();
+
 		ctx.lineCap = 'round';
 		ctx.lineJoin = "round";
 		
@@ -200,13 +200,21 @@ var Painter = {
 		ctx.lineWidth = h;
 		ctx.beginPath();       
 		ctx.moveTo(this.lastX, this.lastY);	
-		ctx.lineTo(this.posX,this.posY);  	
-		ctx.stroke();
-		ctx.save();
-		ctx.globalCompositeOperation='source-atop';
-		var img = this.TEXTURES_LOADED[0]; 
-		this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);				
-		ctx.restore();
+		ctx.lineTo(this.posX,this.posY);  			
+		if(this.BRUSH && this.BRUSH.get_drawing_mode()){			
+			ctx.stroke();
+			ctx.save();
+			ctx.globalCompositeOperation='source-atop';
+			var img = this.TEXTURES_LOADED[0]; 
+			this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);				
+			ctx.restore();
+		}else{
+			ctx.save();	
+			ctx.globalCompositeOperation='destination-out';
+			ctx.stroke();
+			ctx.restore();
+		}
+
 	},
 	draw_circle:function(ctx) {
 	
@@ -243,16 +251,41 @@ var Brush = {
 		this.BRUSH_SIZE_MAX = max;
 		this.BRUSH_SIZE_CURRENT = (this.BRUSH_SIZE_MAX-this.BRUSH_SIZE_MIN)/2+this.BRUSH_SIZE_MIN;
 
+		this.update_drawing_mode('drawing-mode'); // draw||erase		
+
 		this.$range_size = $('#'+this.RANGE_BRUSH_SIZE);
 		this.$lable_size = $('#'+this.RANGE_BRUSH_SIZE_LABEL+' span');
 		
 		this.prepare();		
+		this.behavior();
 	},
 	//public
 	get_size:function() {
 		return this.BRUSH_SIZE_CURRENT;
 	},
 	//private
+	behavior:function() {
+		var _this=this;
+		document.onkeyup = function(e) {			
+		  if (e.key == "1" || e.code == "Digit1") {
+			_this.update_drawing_mode('drawing-mode')	  	
+		  }
+		  if (e.key == "2" || e.code == "Digit2") {
+			_this.update_drawing_mode('erase-mode')	  	
+		  }		  
+		};	
+	},
+	get_drawing_mode:function() {
+		return this.DRAWING_MODE;
+	},
+	update_drawing_mode:function(mode) {
+		if(mode=='drawing-mode'){
+			this.DRAWING_MODE = true;
+		}else{
+			this.DRAWING_MODE = false;
+		}
+		console.log('DRAW MODE', mode)
+	},
 	update_label_brush_size:function() {	
 		this.$lable_size.html(''+this.BRUSH_SIZE_CURRENT);
 	},
