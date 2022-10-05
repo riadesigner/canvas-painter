@@ -78,8 +78,8 @@ var Painter = {
 		if(s==1){
 			return {w:w,h:h,left:0,top:0};
 		}else{			
-			// return {w:w*s, h:h*s, left:(w-w*s)/2, top:(h-h*s)/2};				
-			return {w:w*s, h:h*s, left:0, top:0};				
+			return {w:w*s, h:h*s, left:(w-w*s)/2, top:(h-h*s)/2};				
+			// return {w:w*s, h:h*s, left:0, top:0};				
 		}
 	},
 	scale_update:function(){
@@ -102,11 +102,12 @@ var Painter = {
 		this.$canvas[0].onmousemove = function(event){
 			if(_this.DRAW_MODE){
 				var s = _this.SCALE_ASPECT;
+				var d = _this.get_bounds();
 				// console.log('lastX,lastY',_this.lastX,_this.lastY);
 				_this.lastX = _this.posX;
 				_this.lastY = _this.posY;
-				_this.posX = ((event.pageX-_this.p_offset.left) / _this.k_offset)/s;
-				_this.posY = ((event.pageY-_this.p_offset.top) / _this.k_offset)/s ;				
+				_this.posX = ((event.pageX-_this.p_offset.left- d.left) / _this.k_offset)/s;
+				_this.posY = ((event.pageY-_this.p_offset.top- d.top) / _this.k_offset)/s;				
 				_this.draw();
 			}
 		};	
@@ -115,8 +116,10 @@ var Painter = {
 			_this.DRAW_MODE = true;
 			_this.gCounter = 0;
 			var s = _this.SCALE_ASPECT;
-			_this.posX = (event.pageX-_this.p_offset.left) / _this.k_offset /s;
-			_this.posY = (event.pageY-_this.p_offset.top) / _this.k_offset /s;
+			var d = _this.get_bounds();
+			console.log('d',d)
+			_this.posX = (event.pageX-_this.p_offset.left- d.left) / _this.k_offset /s;
+			_this.posY = (event.pageY-_this.p_offset.top- d.top) / _this.k_offset /s;
 			_this.lastX = _this.posX;
 			_this.lastY = _this.posY;
 			// console.log('posX,posY',_this.posX,_this.posY);
