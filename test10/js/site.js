@@ -8,9 +8,7 @@ var Painter = {
 		this.PARAM = $.extend({w:w,h:h},params);
 		this.TEXTURES = params.textures || [];		
 		this.TEXTURES_LOADED = [];
-		this.DRAW_MODE = false;		
-
-		this.$statusbar = $('#painter-status');
+		this.DRAW_MODE = false;			
 
 		this.posX=0;
 		this.posY=0;
@@ -18,15 +16,10 @@ var Painter = {
 		this.lastY=0;
 		this.gCounter = 2;
 		this.gCounterMax = 10;
-		
-		if(!params.brush || !params.zoom){
-			console.log('Painter need Brush and Zoom');
-			return;
-		}
 
 		this.BRUSH = params.brush;
-		this.ZOOM = params.zoom;
-		this.STATUSBAR = params.statusbar;
+		// this.ZOOM = params.zoom;
+		// this.STATUSBAR = params.statusbar;
 
 		this.pre_build();		
 		this.recalc_size();
@@ -34,6 +27,13 @@ var Painter = {
 		this.textures_preload();
 
 	},
+	set_status:function(msg){
+		this.STATUS = msg;
+		$(this).trigger('status-updated');
+	},
+	get_status:function(){
+		return this.STATUS;
+	},	
 	show_background:function(){
 		var img = this.TEXTURES_LOADED[0]; 
 		this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);		
@@ -42,8 +42,7 @@ var Painter = {
 		return this.TEXTURES.length==this.TEXTURES_LOADED.length;
 	},
 	textures_preload:function(){
-		var _this=this;
-		this.STATUSBAR.set('loading textures...');
+		var _this=this;		
 		this.TEXTURES_READY = false;		
 		if(this.TEXTURES.length){
 			for(var i in this.TEXTURES){				
@@ -52,8 +51,7 @@ var Painter = {
 				img.onload = function(){					
 					_this.TEXTURES_LOADED.push(this);
 					if(_this.textures_loaded_all()){
-						// _this.show_background();	
-						_this.STATUSBAR.set("all ready to draw");
+						_this.set_status("all ready to draw");
 					}
 				}
 			}
@@ -69,6 +67,8 @@ var Painter = {
 		this.ctx = this.$canvas[0].getContext('2d');	
 
 		this.PARAM.onready && this.PARAM.onready();	
+
+		this.set_status("loading textures...");
 
 	},
 
@@ -251,8 +251,8 @@ var PainterBrush = {
 		this.DRAWING_MODE = true;
 
 		this.RANGE_BRUSH_SIZE =  'range-1-brush-size';
-		this.RANGE_BRUSH_SIZE_LABEL = 'range-1-brush-size-label';		
-		this.STATUS = this.get_status();
+		this.RANGE_BRUSH_SIZE_LABEL = 'range-1-brush-size-label';				
+		this.set_status("режим рисования");
 
 		this.update_drawing_mode(true);
 
@@ -267,11 +267,15 @@ var PainterBrush = {
 	//public
 	get_size:function() {
 		return this.BRUSH_SIZE_CURRENT;
+	},		
+	set_status:function(msg){		
+		this.STATUS = msg;	
+		$(this).trigger('status-updated');
 	},
-	//private
 	get_status:function(){
-		return this.get_drawing_mode() ? "Режим рисования" : "Режим стирания";
+		return this.STATUS
 	},
+	//private	
 	behavior:function() {
 		var _this=this;
 		document.onkeyup = function(e) {			
@@ -289,8 +293,8 @@ var PainterBrush = {
 	update_drawing_mode:function(mode) {
 		// true - drawing, false – erasing
 		this.DRAWING_MODE = mode;		
-		this.STATUS = this.get_status();		
-		$(this).trigger('status-updated');
+		var msg = mode ? "Режим рисования" : "Режим стирания";
+		this.set_status(msg);				
 	},
 	update_label_brush_size:function() {	
 		this.$lable_size.html(''+this.BRUSH_SIZE_CURRENT);
@@ -326,8 +330,17 @@ var PainterZoom = {
 	init:function(painter_id){		
 		console.log("init zoom");
 		this.$parent = $('#'+painter_id);
+		this.SCALE = 1;		
 		this.build();
+		this.behavior();
 		return this;
+	},
+	set_status:function(msg){
+		this.STATUS = msg;
+		$(this).trigger('status-updated');
+	},
+	get_status:function(){
+		return this.STATUS;
 	},
 	build:function(){
 		this.$zoom = $([
@@ -337,24 +350,31 @@ var PainterZoom = {
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$zoom);
-	},
-	brhavior:function(){
+		this.set_status("Масштаб:"+(100*this.SCALE)+"%");		
+	},	
+	behavior:function(){
 
 	}
 };
 
 var PainterStatusbar = {
-	init:function(painter_id){
+	init:function(painter_id,arr){
 		this.$parent = $('#'+painter_id);
+		this.ARR = arr;		
 		this.build();
 		this.behavior();
 		return this;	
 	},
 	behavior:function(){
 		var _this=this;
-		$(PainterBrush).on('status-updated',function(){
-			_this.set(PainterBrush.get_status(),1);
-		});
+		for (var i=0;i<this.ARR.length; i++){			
+			(function(obj,index){				
+				obj.get_status && _this.set(obj.get_status(),index);
+				$(obj).on('status-updated',function(){					
+					obj.get_status && _this.set(obj.get_status(),index);
+				});
+			})(this.ARR[i],i);
+		}
 	},
 	set:function(msg,section){
 		var section = section?section:0;
@@ -363,11 +383,11 @@ var PainterStatusbar = {
 	build:function(){
 		this.$statusbar = $([
 			'<div id="painter-status-bar" class="noselect">',
-			'<span></span><span></span><span></span>',
+			'<span>1</span><span>2</span><span>3</span>',
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$statusbar);
-		this.set(PainterBrush.get_status(),1);
+		// this.set(PainterBrush.get_status(),1);
 	}
 };
 
@@ -381,7 +401,7 @@ $(function(){
 		onready:function(){
 			this.brush.init('painter',10,60,2);
 			this.zoom.init('painter');
-			this.statusbar.init('painter');			
+			this.statusbar.init('painter',[Painter,this.brush,this.zoom]);			
 		}
 	});
 
