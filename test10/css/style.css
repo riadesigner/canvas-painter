@@ -1,0 +1,51 @@
+body,html{
+	padding:0;margin:0;
+}
+*{box-sizing: border-box;}
+body{
+	padding:10px 20px;
+	background:#333340;
+	color:lightgray;
+}
+.noselect {
+  -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+     -khtml-user-select: none; /* Konqueror HTML */
+       -moz-user-select: none; /* Old versions of Firefox */
+        -ms-user-select: none; /* Internet Explorer/Edge */
+            user-select: none; /* Non-prefixed version, currently
+                                  supported by Chrome, Edge, Opera and Firefox */
+}
+
+.all-params{
+    width:300px;
+    background: gray;
+    padding:10px 30px 20px 30px;
+    border-radius: 10px;
+}
+#range-1-brush-size-label{ font:.9rem arial; }
+
+
+#painter{ position: relative;background: white;}
+#painter-zoom-id {
+	position: absolute;
+	top:10px;right:10px;	
+	background: gray;
+	width: 54px;height: 108px;
+	border-radius:50px;	
+}
+#painter-zoom-id span{position: absolute;top:50%;left:50%;transform: translate(-50%,-50%);font:1rem arial;color:black;}
+#painter-zoom-id .painter-zoom-in{
+	width: 50px; height: 50px;border-radius: 100%;display: inline-block; 
+	background: gold;cursor: pointer;
+	position: absolute;top:2px;left:2px;	
+}
+#painter-zoom-id .painter-zoom-out{
+	width: 50px; height: 50px;border-radius: 100%; display: inline-block;
+	background: pink;cursor: pointer;
+	position: absolute;top:56px;left:2px;
+}
+#painter-zoom-id div:active{opacity: .5;}
+
+#painter-status-bar {position: absolute;bottom: 0;left: 0;background: gray;width: 100%;padding: 0;}
+#painter-status-bar span{display: block; font:.9rem arial;color:white;padding:6px 10px;letter-spacing: 2px;}
