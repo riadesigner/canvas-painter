@@ -76,9 +76,10 @@ var Painter = {
 		var h = this.PARAM.h;		
 		var s = this.SCALE_ASPECT;
 		if(s==1){
-			return {w:w,h:h,left:0,top:0};			
-		}else{
-			return {w:w*s, h:h*s, left:(w-w*s)/2, top:(h-h*s)/2};				
+			return {w:w,h:h,left:0,top:0};
+		}else{			
+			// return {w:w*s, h:h*s, left:(w-w*s)/2, top:(h-h*s)/2};				
+			return {w:w*s, h:h*s, left:0, top:0};				
 		}
 	},
 	scale_update:function(){
@@ -86,13 +87,13 @@ var Painter = {
 		var bounds = this.get_bounds();
 		this.$canvas.css({width:bounds.w,height:bounds.h,left:bounds.left,top:bounds.top});
 		console.log('this.SCALE_ASPECT',this.SCALE_ASPECT)
-		console.log('bounds',this.bounds)
+		console.log('bounds',this.get_bounds())
 		
 	},
 	recalc_size:function() {
 		var $p = this.$painter;
 		this.p_offset = {top:$p.offset().top,left:$p.offset().left};			
-		this.m_offset = $p.width()/this.$canvas[0].width;		
+		this.k_offset = $p.width()/this.$canvas[0].width;		
 	},
 	behavior:function() {
 		var _this=this;
@@ -100,26 +101,32 @@ var Painter = {
 		//draw line
 		this.$canvas[0].onmousemove = function(event){
 			if(_this.DRAW_MODE){
+				var s = _this.SCALE_ASPECT;
+				// console.log('lastX,lastY',_this.lastX,_this.lastY);
 				_this.lastX = _this.posX;
 				_this.lastY = _this.posY;
-				_this.posX = ((event.pageX-_this.p_offset.left) / _this.m_offset);
-				_this.posY = ((event.pageY-_this.p_offset.top) / _this.m_offset) ;				
+				_this.posX = ((event.pageX-_this.p_offset.left) / _this.k_offset)/s;
+				_this.posY = ((event.pageY-_this.p_offset.top) / _this.k_offset)/s ;				
 				_this.draw();
 			}
 		};	
 
-		this.$canvas[0].onmouseleave = function(event){
-			_this.DRAW_MODE = false;
-		};			
-
-
 		this.$canvas[0].onmousedown = function(event){
 			_this.DRAW_MODE = true;
 			_this.gCounter = 0;
-			_this.posX = (event.pageX-_this.p_offset.left) / _this.m_offset;
-			_this.posY = (event.pageY-_this.p_offset.top) / _this.m_offset;
+			var s = _this.SCALE_ASPECT;
+			_this.posX = (event.pageX-_this.p_offset.left) / _this.k_offset /s;
+			_this.posY = (event.pageY-_this.p_offset.top) / _this.k_offset /s;
+			_this.lastX = _this.posX;
+			_this.lastY = _this.posY;
+			// console.log('posX,posY',_this.posX,_this.posY);
 			_this.draw_start_cap();
-		};				
+
+		};		
+
+		this.$canvas[0].onmouseleave = function(event){
+			_this.DRAW_MODE = false;
+		};					
 
 		document.body.onmouseup = function(){
 			console.log("end draw")
@@ -188,7 +195,7 @@ var Painter = {
 		// this.draw_circle(this.ctx);
 	},
 	draw_start_cap:function() {
-		// this.draw_circle(this.ctx);		
+		this.draw_circle(this.ctx);		
 	},
 	get_color:function() {		
 		return "#000000";
@@ -206,22 +213,19 @@ var Painter = {
 		ctx.lineCap = 'round';
 		ctx.lineJoin = "round";
 		
-		if(this.BRUSH){
-			var h =  this.BRUSH.get_size();	
-		}else{
-			var h =  this.BRUSH_DEFAULT.size;
-		} 
-
+		var h =  this.BRUSH.get_size();			
+		var posX = this.posX;
+		var posY = this.posY;
 		// ctx.lineWidth = Math.min(h,this.gCounter);
-		var delta = Math.hypot(this.lastX - this.posX, this.lastY - this.posY);
+		// var delta = Math.hypot(this.lastX - posX, this.lastY - posY);
 		// if(delta<h/3) return false;
 		// if(this.gCounter<this.gCounterMax)return false;
 
 		ctx.lineWidth = h;
 		ctx.beginPath();       
 		ctx.moveTo(this.lastX, this.lastY);	
-		ctx.lineTo(this.posX,this.posY);  			
-		if(this.BRUSH && this.BRUSH.get_drawing_mode()){			
+		ctx.lineTo(posX,posY);  			
+		if(this.BRUSH && this.BRUSH.get_drawing_mode()){
 			ctx.stroke();
 			ctx.save();
 			ctx.globalCompositeOperation='source-atop';
@@ -240,24 +244,41 @@ var Painter = {
 	
 		// var h = Math.hypot(this.lastX - this.posX, this.lastY - this.posY);
 		// var radius = Math.min(h,30);
-		if(this.BRUSH){
-			var h = this.BRUSH.get_size()/2;	
+		var radius = this.BRUSH.get_size()/2;
+		// var s = this.SCALE_ASPECT;
+		var b = this.get_bounds();
+			
+			ctx.beginPath();
+			ctx.arc(this.posX,this.posY, radius, 0, 2 * Math.PI, false);
+			// console.log('this.posX,this.posY',this.posX,this.posY)
+			ctx.fillStyle = this.get_color();			
+			ctx.lineWidth = 0;
+			ctx.strokeStyle = '#00000000';
+					
+		if(this.BRUSH && this.BRUSH.get_drawing_mode()){
+			ctx.stroke();
+			ctx.fill();
+			ctx.save();
+			ctx.globalCompositeOperation='source-atop';
+			var img = this.TEXTURES_LOADED[0]; 
+			this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);				
+			ctx.restore();			
 		}else{
-			var h = this.BRUSH_DEFAULT.size/2;
+			ctx.save();	
+			ctx.globalCompositeOperation='destination-out';
+			ctx.stroke();
+			ctx.fill();
+			ctx.restore();
 		}
+
+		
 		
 		// if(this.gCounter<this.gCounterMax){
 		// 	h -= (this.gCounterMax-this.gCounter);
 		// }
 		// var radius = Math.min(h,this.gCounter);
-		var radius = h;
-		ctx.beginPath();
-		ctx.arc(this.posX,this.posY, radius, 0, 2 * Math.PI, false);
-		ctx.fillStyle = this.get_color();
-		ctx.fill();
-		ctx.lineWidth = 0;
-		ctx.strokeStyle = '#00000000';
-		ctx.stroke();	
+		
+	
 	}
 
 };
