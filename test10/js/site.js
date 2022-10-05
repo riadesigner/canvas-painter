@@ -16,9 +16,10 @@ var Painter = {
 		this.lastY=0;
 		this.gCounter = 2;
 		this.gCounterMax = 10;
+		this.SCALE_ASPECT = 1;
 
 		this.BRUSH = params.brush;
-		// this.ZOOM = params.zoom;
+		this.ZOOM = params.zoom;
 		// this.STATUSBAR = params.statusbar;
 
 		this.pre_build();		
@@ -58,20 +59,36 @@ var Painter = {
 		}		
 	},
 	pre_build:function() {
-		
-		this.$painter.css({width:this.PARAM.w,height:this.PARAM.h});
+		var bounds = this.get_bounds();
+		this.$painter.css({width:bounds.w,height:bounds.h,overflow:'hidden'});
 		this.$canvas = $("<canvas></canvas>");
-		this.$canvas.attr({width:this.PARAM.w*2,height:this.PARAM.h*2});
-		this.$canvas.css({'max-width':'100%',background:'#ffffff'});
+		this.$canvas.attr({width:bounds.w*2,height:bounds.h*2});
+		this.$canvas.css({background:'#ffffff',position:'absolute'});			
+		this.$canvas.css({width:bounds.w,height:bounds.h,left:bounds.left,top:bounds.top});
 		this.$painter.append(this.$canvas);
 		this.ctx = this.$canvas[0].getContext('2d');	
 
 		this.PARAM.onready && this.PARAM.onready();	
-
 		this.set_status("loading textures...");
-
 	},
-
+	get_bounds:function(){
+		var w = this.PARAM.w;
+		var h = this.PARAM.h;		
+		var s = this.SCALE_ASPECT;
+		if(s==1){
+			return {w:w,h:h,left:0,top:0};			
+		}else{
+			return {w:w*s, h:h*s, left:(w-w*s)/2, top:(h-h*s)/2};				
+		}
+	},
+	scale_update:function(){
+		this.SCALE_ASPECT = this.ZOOM.get_scale()/100;
+		var bounds = this.get_bounds();
+		this.$canvas.css({width:bounds.w,height:bounds.h,left:bounds.left,top:bounds.top});
+		console.log('this.SCALE_ASPECT',this.SCALE_ASPECT)
+		console.log('bounds',this.bounds)
+		
+	},
 	recalc_size:function() {
 		var $p = this.$painter;
 		this.p_offset = {top:$p.offset().top,left:$p.offset().left};			
@@ -85,8 +102,8 @@ var Painter = {
 			if(_this.DRAW_MODE){
 				_this.lastX = _this.posX;
 				_this.lastY = _this.posY;
-				_this.posX = (event.pageX-_this.p_offset.left) / _this.m_offset;
-				_this.posY = (event.pageY-_this.p_offset.top) / _this.m_offset;				
+				_this.posX = ((event.pageX-_this.p_offset.left) / _this.m_offset);
+				_this.posY = ((event.pageY-_this.p_offset.top) / _this.m_offset) ;				
 				_this.draw();
 			}
 		};	
@@ -115,6 +132,10 @@ var Painter = {
 		  	_this.clear();
 		  }
 		};
+
+		$(this.ZOOM).on('scale-updated',function(){			
+			_this.scale_update();
+		});
 		
 		// document.getElementById('btn-save').onclick = function(){ _this.save_to_pdf();}	
 
@@ -330,17 +351,24 @@ var PainterZoom = {
 	init:function(painter_id){		
 		console.log("init zoom");
 		this.$parent = $('#'+painter_id);
-		this.SCALE = 1;		
+		this.SCALE = 100;		
 		this.build();
-		this.behavior();
 		return this;
 	},
-	set_status:function(msg){
-		this.STATUS = msg;
-		$(this).trigger('status-updated');
-	},
+	//public
 	get_status:function(){
 		return this.STATUS;
+	},	
+	get_scale:function(){
+		return this.SCALE;
+	},
+	//private
+	update_status:function(){
+		this.set_status("Масштаб: "+this.SCALE+"%");
+	},
+	set_status:function(msg){
+		this.STATUS = msg;		
+		$(this).trigger('status-updated');
 	},
 	build:function(){
 		this.$zoom = $([
@@ -350,10 +378,27 @@ var PainterZoom = {
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$zoom);
-		this.set_status("Масштаб:"+(100*this.SCALE)+"%");		
-	},	
+		this.behavior();
+		this.update_status();
+	},		
 	behavior:function(){
-
+		var _this=this;
+		$('#painter-zoom-id .painter-zoom-in').on("touchend, click",function(){			
+			_this.zoom_in();
+		});
+		$('#painter-zoom-id .painter-zoom-out').on("touchend, click",function(){			
+			_this.zoom_out();
+		});		
+	},
+	zoom_in:function(){
+		this.SCALE +=10;
+		this.update_status();		
+		$(this).trigger('scale-updated');
+	},
+	zoom_out:function(){
+		this.SCALE -=10;
+		this.update_status();
+		$(this).trigger('scale-updated');
 	}
 };
 
