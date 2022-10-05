@@ -1,5 +1,6 @@
 body,html{
 	padding:0;margin:0;
+	font-family: arial;
 }
 *{box-sizing: border-box;}
 body{
@@ -47,5 +48,5 @@ body{
 }
 #painter-zoom-id div:active{opacity: .5;}
 
-#painter-status-bar {position: absolute;bottom: 0;left: 0;background: gray;width: 100%;padding: 0;}
-#painter-status-bar span{display: block; font:.9rem arial;color:white;padding:6px 10px;letter-spacing: 2px;}
+#painter-status-bar {position: absolute;bottom: 0;left: 0;background: gray;width: 100%;padding: 0;display: flex;}
+#painter-status-bar span{width: 33.3%; font:.9rem arial;color:white;padding:6px 10px;letter-spacing: 2px;}

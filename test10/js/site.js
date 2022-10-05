@@ -114,8 +114,8 @@ var Painter = {
 		  if (e.key == " " || e.code == "Space" || e.keyCode == 32 ) {
 		  	_this.clear();
 		  }
-		};	
-
+		};
+		
 		// document.getElementById('btn-save').onclick = function(){ _this.save_to_pdf();}	
 
 	},
@@ -242,16 +242,19 @@ var Painter = {
 };
 
 var PainterBrush = {
-	init:function(painter_id, min,max) {
+	init:function(painter_id, min,max,step) {
 
 		this.BRUSH_SIZE_MIN = min;
 		this.BRUSH_SIZE_MAX = max;
-		this.BRUSH_SIZE_CURRENT = (this.BRUSH_SIZE_MAX-this.BRUSH_SIZE_MIN)/2+this.BRUSH_SIZE_MIN;
+		this.BRUSH_SIZE_STEP = step;
+		this.BRUSH_SIZE_CURRENT = (this.BRUSH_SIZE_MAX-this.BRUSH_SIZE_MIN)/2+this.BRUSH_SIZE_MIN;		
+		this.DRAWING_MODE = true;
 
 		this.RANGE_BRUSH_SIZE =  'range-1-brush-size';
-		this.RANGE_BRUSH_SIZE_LABEL = 'range-1-brush-size-label';
-		
-		this.update_drawing_mode('drawing-mode'); // draw||erase		
+		this.RANGE_BRUSH_SIZE_LABEL = 'range-1-brush-size-label';		
+		this.STATUS = this.get_status();
+
+		this.update_drawing_mode(true);
 
 		this.$range_size = $('#'+this.RANGE_BRUSH_SIZE);
 		this.$lable_size = $('#'+this.RANGE_BRUSH_SIZE_LABEL+' span');
@@ -266,14 +269,17 @@ var PainterBrush = {
 		return this.BRUSH_SIZE_CURRENT;
 	},
 	//private
+	get_status:function(){
+		return this.get_drawing_mode() ? "Режим рисования" : "Режим стирания";
+	},
 	behavior:function() {
 		var _this=this;
 		document.onkeyup = function(e) {			
 		  if (e.key == "1" || e.code == "Digit1") {
-			_this.update_drawing_mode('drawing-mode')	  	
+			_this.update_drawing_mode(true); 	
 		  }
 		  if (e.key == "2" || e.code == "Digit2") {
-			_this.update_drawing_mode('erase-mode')	  	
+			_this.update_drawing_mode(false);	  	
 		  }		  
 		};	
 	},
@@ -281,12 +287,10 @@ var PainterBrush = {
 		return this.DRAWING_MODE;
 	},
 	update_drawing_mode:function(mode) {
-		if(mode=='drawing-mode'){
-			this.DRAWING_MODE = true;
-		}else{
-			this.DRAWING_MODE = false;
-		}
-		console.log('DRAW MODE', mode)
+		// true - drawing, false – erasing
+		this.DRAWING_MODE = mode;		
+		this.STATUS = this.get_status();		
+		$(this).trigger('status-updated');
 	},
 	update_label_brush_size:function() {	
 		this.$lable_size.html(''+this.BRUSH_SIZE_CURRENT);
@@ -295,7 +299,7 @@ var PainterBrush = {
 		var _this=this;
 		
 		this.update_label_brush_size();
-		var sldr = {min:this.BRUSH_SIZE_MIN,max:this.BRUSH_SIZE_MAX,step:1};		
+		var sldr = {min:this.BRUSH_SIZE_MIN,max:this.BRUSH_SIZE_MAX,step:this.BRUSH_SIZE_STEP};		
 
 		this.$range_size.slider({min:sldr['min'],max:sldr['max']});
 		this.$range_size.slider( "value", this.BRUSH_SIZE_CURRENT );
@@ -343,18 +347,27 @@ var PainterStatusbar = {
 	init:function(painter_id){
 		this.$parent = $('#'+painter_id);
 		this.build();
+		this.behavior();
 		return this;	
 	},
-	set:function(msg){
-		this.$statusbar.find('span').html(msg);
+	behavior:function(){
+		var _this=this;
+		$(PainterBrush).on('status-updated',function(){
+			_this.set(PainterBrush.get_status(),1);
+		});
+	},
+	set:function(msg,section){
+		var section = section?section:0;
+		this.$statusbar.find('span:eq('+section+')').html(msg);
 	},
 	build:function(){
 		this.$statusbar = $([
 			'<div id="painter-status-bar" class="noselect">',
-			'<span></span>',
+			'<span></span><span></span><span></span>',
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$statusbar);
+		this.set(PainterBrush.get_status(),1);
 	}
 };
 
@@ -366,7 +379,7 @@ $(function(){
 		zoom:PainterZoom,
 		statusbar:PainterStatusbar,
 		onready:function(){
-			this.brush.init('painter',10,40);
+			this.brush.init('painter',10,60,2);
 			this.zoom.init('painter');
 			this.statusbar.init('painter');			
 		}
