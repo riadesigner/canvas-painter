@@ -437,9 +437,11 @@ var PainterZoom = {
 		var _this=this;
 		$('#painter-zoom-id .painter-zoom-in').on("touchend, click",function(){			
 			_this.zoom_in();
+			return false;
 		});
 		$('#painter-zoom-id .painter-zoom-out').on("touchend, click",function(){			
 			_this.zoom_out();
+			return false;
 		});		
 	},
 	zoom_in:function(){
