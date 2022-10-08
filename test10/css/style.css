@@ -26,6 +26,8 @@ body{
 }
 #range-1-brush-size-label{ font:.9rem arial; }
 
+.annotation{color:gray;}
+.annotation span{color:white;}
 
 #painter{ position: relative;background: #eeeeee;}
 #painter-zoom-id {

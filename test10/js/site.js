@@ -8,19 +8,24 @@ var Painter = {
 		this.PARAM = $.extend({w:w,h:h},params);
 		this.TEXTURES = params.textures || [];		
 		this.TEXTURES_LOADED = [];
-		this.DRAW_MODE = false;			
+		
+		this.DRAW_MODE = false;
+		this.PAN_MODE = false;
+		this.SPACEBAR_PRESSED = false;
 
+		this.cavas_coord = [0,0];
+		this.p_offset = {top:0,left:0};
+		this.pixel_size = 1;
+		this.painterY=0;
 		this.posX=0;
 		this.posY=0;
 		this.lastX=0;
 		this.lastY=0;
-		this.gCounter = 2;
-		this.gCounterMax = 10;
-		this.SCALE_ASPECT = 1;
 
+		this.SCALE_ASPECT = 1;
+		
 		this.BRUSH = params.brush;
-		this.ZOOM = params.zoom;
-		// this.STATUSBAR = params.statusbar;
+		this.ZOOM = params.zoom;		
 
 		this.pre_build();		
 		this.recalc_size();
@@ -66,8 +71,7 @@ var Painter = {
 		this.$canvas.css({background:'#ffffff',position:'absolute'});			
 		this.$canvas.css({width:bounds.w,height:bounds.h,left:bounds.left,top:bounds.top});
 		this.$painter.append(this.$canvas);
-		this.ctx = this.$canvas[0].getContext('2d');	
-
+		this.ctx = this.$canvas[0].getContext('2d');
 		this.PARAM.onready && this.PARAM.onready();	
 		this.set_status("loading textures...");
 	},
@@ -75,76 +79,119 @@ var Painter = {
 		var w = this.PARAM.w;
 		var h = this.PARAM.h;		
 		var s = this.SCALE_ASPECT;
+		var coord = this.cavas_coord;
 		if(s==1){
-			return {w:w,h:h,left:0,top:0};
-		}else{			
-			return {w:w*s, h:h*s, left:(w-w*s)/2, top:(h-h*s)/2};				
-			// return {w:w*s, h:h*s, left:0, top:0};				
-		}
+			return {w:w,h:h,left:coord[0],top:coord[1]};
+		}else{		
+			console.log('!',this.cavas_coord)	
+			return {w:w*s, h:h*s, left:(w-w*s)/2+coord[0], top:(h-h*s)/2+coord[1]};			
+		}		
 	},
-	scale_update:function(){
+	canvas_position_update:function(coord){
+		this.cavas_coord = coord;
+		this.$canvas.css({left:coord[0],top:coord[1]});		
+	},
+	canvas_scale_update:function(){
 		this.SCALE_ASPECT = this.ZOOM.get_scale()/100;
-		var bounds = this.get_bounds();
-		this.$canvas.css({width:bounds.w,height:bounds.h,left:bounds.left,top:bounds.top});
-		console.log('this.SCALE_ASPECT',this.SCALE_ASPECT)
-		console.log('bounds',this.get_bounds())
-		
+		var b = this.get_bounds();
+		this.$canvas.css({width:b.w,height:b.h,left:b.left,top:b.top});		
 	},
 	recalc_size:function() {
 		var $p = this.$painter;
 		this.p_offset = {top:$p.offset().top,left:$p.offset().left};			
-		this.k_offset = $p.width()/this.$canvas[0].width;		
+		this.pixel_size = $p.width()/this.$canvas[0].width;		
+		console.log('p_offset',this.p_offset)
 	},
 	behavior:function() {
-		var _this=this;
-		
-		//draw line
-		this.$canvas[0].onmousemove = function(event){
+		var _this=this;		
+
+		this.$painter[0].onmousemove = function(event){
+
 			if(_this.DRAW_MODE){
 				var s = _this.SCALE_ASPECT;
-				var d = _this.get_bounds();
-				// console.log('lastX,lastY',_this.lastX,_this.lastY);
+				var b = _this.get_bounds();
 				_this.lastX = _this.posX;
 				_this.lastY = _this.posY;
-				_this.posX = ((event.pageX-_this.p_offset.left- d.left) / _this.k_offset)/s;
-				_this.posY = ((event.pageY-_this.p_offset.top- d.top) / _this.k_offset)/s;				
+				_this.posX = ((event.pageX-_this.p_offset.left- b.left) / _this.pixel_size)/s;
+				_this.posY = ((event.pageY-_this.p_offset.top- b.top) / _this.pixel_size)/s;				
 				_this.draw();
+			};
+			if(_this.PAN_MODE){				
+				// var left = _this.pan_coord.canvasXstart + (event.pageX - _this.pan_coord.panMouseXstart);
+				// var top = _this.pan_coord.canvasYstart + (event.pageY - _this.pan_coord.panMouseYstart);
+				var left = event.pageX - _this.pan_coord.deltaX;
+				var top = event.pageY - _this.pan_coord.deltaY;
+				_this.canvas_position_update([left,top]);				
 			}
 		};	
 
-		this.$canvas[0].onmousedown = function(event){
-			_this.DRAW_MODE = true;
-			_this.gCounter = 0;
-			var s = _this.SCALE_ASPECT;
-			var d = _this.get_bounds();
-			console.log('d',d)
-			_this.posX = (event.pageX-_this.p_offset.left- d.left) / _this.k_offset /s;
-			_this.posY = (event.pageY-_this.p_offset.top- d.top) / _this.k_offset /s;
-			_this.lastX = _this.posX;
-			_this.lastY = _this.posY;
-			// console.log('posX,posY',_this.posX,_this.posY);
-			_this.draw_start_cap();
+		this.$painter[0].onmousedown = function(event){									
+			if(_this.SPACEBAR_PRESSED){
+				// PAN
+				_this.DRAW_MODE = false;
+				_this.PAN_MODE = true;
+				var b = _this.get_bounds();
 
-		};		
+				console.log(event.pageX,event.pageY, b.left,b.top)
+				_this.pan_coord = {
+					// panMouseXstart:event.pageX,
+					// panMouseYstart:event.pageY,
+					// canvasXstart:b.left,
+					// canvasYstart:b.top,
+					deltaX:event.pageX-b.left,
+					deltaY:event.pageY-b.top
+				};
+				// console.log('_this.panMouseX,_this.panMouseY ',_this.panMouseX,_this.panMouseY )
+				// var b = _this.get_bounds();
+				// console.log('b',b.left,b.top)
 
-		this.$canvas[0].onmouseleave = function(event){
-			_this.DRAW_MODE = false;
-		};					
+			}else{
+				// DRAWING
+				_this.PAN_MODE = false;
+				_this.DRAW_MODE = true;
+				
+				var s = _this.SCALE_ASPECT;
+				var d = _this.get_bounds();				
+				_this.posX = (event.pageX-_this.p_offset.left- d.left) / _this.pixel_size /s;
+				_this.posY = (event.pageY-_this.p_offset.top- d.top) / _this.pixel_size /s;
+				_this.lastX = _this.posX;
+				_this.lastY = _this.posY;				
+				_this.draw_start_cap();				
+			}
 
-		document.body.onmouseup = function(){
-			console.log("end draw")
-			_this.DRAW_MODE = false;
-		}
-
-		//draw canvas
-		document.body.onkeyup = function(e) {
-		  if (e.key == " " || e.code == "Space" || e.keyCode == 32 ) {
-		  	_this.clear();
-		  }
 		};
 
+		this.$painter[0].onmouseup = function(event){
+			_this.DRAW_MODE = false;
+			_this.PAN_MODE = false;
+			_this.SPACEBAR_PRESSED = false;
+		};				
+
+		this.$painter[0].onmouseleave = function(event){
+			_this.DRAW_MODE = false;
+			_this.PAN_MODE = false;
+			_this.SPACEBAR_PRESSED = false;
+		};
+		
+		document.addEventListener('keydown',function(e){			
+		  if (e.key == " " || e.code == "Space" || e.keyCode == 32 ) {
+			_this.SPACEBAR_PRESSED = true;
+			_this.DRAW_MODE = false;
+
+			// _this.PAN_MODE = true;			
+			document.body.style.cursor = 'grab';
+		  }			
+		});		
+		document.addEventListener('keyup',function(e){			
+		  if (e.key == " " || e.code == "Space" || e.keyCode == 32 ) {		  	
+			_this.SPACEBAR_PRESSED = false;
+			_this.PAN_MODE = false;
+			document.body.style.cursor = 'default';
+		  }			
+		});
+
 		$(this.ZOOM).on('scale-updated',function(){			
-			_this.scale_update();
+			_this.canvas_scale_update();
 		});
 		
 		// document.getElementById('btn-save').onclick = function(){ _this.save_to_pdf();}	
@@ -192,7 +239,7 @@ var Painter = {
 		// this.ctx2 = new canvas2pdf.PdfContext(blobStream());
 	},
 	draw:function() {
-		this.gCounter++;		
+		// this.gCounter++;		
 		this.draw_line(this.ctx);		
 
 		// this.draw_circle(this.ctx);
