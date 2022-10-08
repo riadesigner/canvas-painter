@@ -170,6 +170,12 @@ var Painter = {
 		  }			
 		});
 
+		document.addEventListener('keydown',function(e){			
+		  if (e.key == "c" || e.code == "KeyC" || e.keyCode == 67 ) {
+			_this.clear();	 
+		  }			
+		});		
+
 		$(this.ZOOM).on('scale-updated',function(){		
 			_this.SCALE_ASPECT = _this.ZOOM.get_scale()/100;	
 			_this.canvas_update_pos();
