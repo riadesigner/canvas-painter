@@ -33,7 +33,7 @@ var Painter = {
 		this.behavior();		
 		this.textures_preload();
 
-	},
+	},	
 	set_status:function(msg){
 		this.STATUS = msg;
 		$(this).trigger('status-updated');
@@ -226,23 +226,23 @@ var Painter = {
 		// this.ctx2 = new canvas2pdf.PdfContext(blobStream());
 	},
 	draw:function() {
-		// this.gCounter++;		
-		this.draw_line(this.ctx);		
-
-		// this.draw_circle(this.ctx);
+		this.draw_line(this.ctx);
 	},
 	draw_start_cap:function() {
 		this.draw_circle(this.ctx);		
 	},
 	get_color:function() {		
 		return "#000000";
-	},
+	},	
 	get_color_rand:function() {
 		var r= Math.floor(Math.random() * 254);
 		var g= Math.floor(Math.random() * 254);
 		var b= Math.floor(Math.random() * 254);
 		return 'rgba('+r+','+g+','+b+',1)';
 	},
+	get_paper_texture:function(){
+
+	},	
 	draw_line:function(ctx) {		
 		
 		ctx.strokeStyle = this.get_color();
@@ -250,26 +250,44 @@ var Painter = {
 		ctx.lineCap = 'round';
 		ctx.lineJoin = "round";
 		
-		var h =  this.BRUSH.get_size();			
+		var brush_size =  this.BRUSH.get_size();			
 		var posX = this.posX;
 		var posY = this.posY;
+		var w = this.$canvas[0].width;
+		var h = this.$canvas[0].height;
 		// ctx.lineWidth = Math.min(h,this.gCounter);
 		// var delta = Math.hypot(this.lastX - posX, this.lastY - posY);
 		// if(delta<h/3) return false;
 		// if(this.gCounter<this.gCounterMax)return false;
 
-		ctx.lineWidth = h;
+		// this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);
+		
+		ctx.save();
+		
+		// ctx.globalCompositeOperation = "destination-over";
+		var counter = -1;
+		var row_height = 30;
+		for(var i=0;i<10;i++){
+			counter*=-1;
+			ctx.fillStyle = counter>0?"red":"#ffffff00";
+			ctx.fillRect(0, i*row_height, w, row_height);
+		}	
+		ctx.restore();
+
+		ctx.lineWidth = brush_size;
 		ctx.beginPath();       
 		ctx.moveTo(this.lastX, this.lastY);	
 		ctx.lineTo(posX,posY);  			
 		if(this.BRUSH && this.BRUSH.get_drawing_mode()){
+			//drawing
 			ctx.stroke();
 			ctx.save();
 			ctx.globalCompositeOperation='source-atop';
 			var img = this.TEXTURES_LOADED[0]; 
-			this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);				
+			this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);
 			ctx.restore();
 		}else{
+			//erasing
 			ctx.save();	
 			ctx.globalCompositeOperation='destination-out';
 			ctx.stroke();
@@ -317,8 +335,8 @@ var Painter = {
 		
 	
 	}
-
 };
+
 
 var PainterBrush = {
 	init:function(painter_id, min,max,step) {
