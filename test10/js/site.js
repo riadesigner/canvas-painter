@@ -13,7 +13,8 @@ var Painter = {
 		this.PAN_MODE = false;
 		this.SPACEBAR_PRESSED = false;
 
-		this.cavas_coord = [0,0];
+
+		this.world_coord = [0,0];
 		this.p_offset = {top:0,left:0};
 		this.pixel_size = 1;
 		this.painterY=0;
@@ -79,20 +80,14 @@ var Painter = {
 		var w = this.PARAM.w;
 		var h = this.PARAM.h;		
 		var s = this.SCALE_ASPECT;
-		var coord = this.cavas_coord;
+		var w_coord = this.world_coord;
 		if(s==1){
-			return {w:w,h:h,left:coord[0],top:coord[1]};
-		}else{		
-			console.log('!',this.cavas_coord)	
-			return {w:w*s, h:h*s, left:(w-w*s)/2+coord[0], top:(h-h*s)/2+coord[1]};			
+			return {w:w,h:h,left:w_coord[0],top:w_coord[1]};
+		}else{					
+			return {w:w*s, h:h*s, left:w_coord[0]+(w-w*s)/2, top:w_coord[1]+(h-h*s)/2};
 		}		
 	},
-	canvas_position_update:function(coord){
-		this.cavas_coord = coord;
-		this.$canvas.css({left:coord[0],top:coord[1]});		
-	},
-	canvas_scale_update:function(){
-		this.SCALE_ASPECT = this.ZOOM.get_scale()/100;
+	canvas_update_pos:function(){		
 		var b = this.get_bounds();
 		this.$canvas.css({width:b.w,height:b.h,left:b.left,top:b.top});		
 	},
@@ -116,12 +111,11 @@ var Painter = {
 				_this.posY = ((event.pageY-_this.p_offset.top- b.top) / _this.pixel_size)/s;				
 				_this.draw();
 			};
-			if(_this.PAN_MODE){				
-				// var left = _this.pan_coord.canvasXstart + (event.pageX - _this.pan_coord.panMouseXstart);
-				// var top = _this.pan_coord.canvasYstart + (event.pageY - _this.pan_coord.panMouseYstart);
-				var left = event.pageX - _this.pan_coord.deltaX;
-				var top = event.pageY - _this.pan_coord.deltaY;
-				_this.canvas_position_update([left,top]);				
+			if(_this.PAN_MODE){
+				var x = event.pageX - _this.pan_coord.deltaX;
+				var y = event.pageY - _this.pan_coord.deltaY;
+				_this.world_coord = [x,y];
+				_this.canvas_update_pos();
 			}
 		};	
 
@@ -130,30 +124,18 @@ var Painter = {
 				// PAN
 				_this.DRAW_MODE = false;
 				_this.PAN_MODE = true;
-				var b = _this.get_bounds();
-
-				console.log(event.pageX,event.pageY, b.left,b.top)
 				_this.pan_coord = {
-					// panMouseXstart:event.pageX,
-					// panMouseYstart:event.pageY,
-					// canvasXstart:b.left,
-					// canvasYstart:b.top,
-					deltaX:event.pageX-b.left,
-					deltaY:event.pageY-b.top
+					deltaX:event.pageX - _this.world_coord[0],
+					deltaY:event.pageY - _this.world_coord[1]
 				};
-				// console.log('_this.panMouseX,_this.panMouseY ',_this.panMouseX,_this.panMouseY )
-				// var b = _this.get_bounds();
-				// console.log('b',b.left,b.top)
-
 			}else{
 				// DRAWING
 				_this.PAN_MODE = false;
-				_this.DRAW_MODE = true;
-				
+				_this.DRAW_MODE = true;				
 				var s = _this.SCALE_ASPECT;
-				var d = _this.get_bounds();				
-				_this.posX = (event.pageX-_this.p_offset.left- d.left) / _this.pixel_size /s;
-				_this.posY = (event.pageY-_this.p_offset.top- d.top) / _this.pixel_size /s;
+				var b = _this.get_bounds();				
+				_this.posX = (event.pageX-_this.p_offset.left- b.left) / _this.pixel_size /s;
+				_this.posY = (event.pageY-_this.p_offset.top- b.top) / _this.pixel_size /s;
 				_this.lastX = _this.posX;
 				_this.lastY = _this.posY;				
 				_this.draw_start_cap();				
@@ -176,9 +158,7 @@ var Painter = {
 		document.addEventListener('keydown',function(e){			
 		  if (e.key == " " || e.code == "Space" || e.keyCode == 32 ) {
 			_this.SPACEBAR_PRESSED = true;
-			_this.DRAW_MODE = false;
-
-			// _this.PAN_MODE = true;			
+			_this.DRAW_MODE = false;			
 			document.body.style.cursor = 'grab';
 		  }			
 		});		
@@ -190,8 +170,9 @@ var Painter = {
 		  }			
 		});
 
-		$(this.ZOOM).on('scale-updated',function(){			
-			_this.canvas_scale_update();
+		$(this.ZOOM).on('scale-updated',function(){		
+			_this.SCALE_ASPECT = _this.ZOOM.get_scale()/100;	
+			_this.canvas_update_pos();
 		});
 		
 		// document.getElementById('btn-save').onclick = function(){ _this.save_to_pdf();}	
