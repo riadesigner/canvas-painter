@@ -30,6 +30,7 @@ body{
 .annotation span{color:white;}
 
 #painter{ position: relative;background: #eeeeee;}
+
 #painter-zoom-id {
 	position: absolute;
 	top:10px;right:10px;	

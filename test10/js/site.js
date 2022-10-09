@@ -8,11 +8,11 @@ var Painter = {
 		this.PARAM = $.extend({w:w,h:h},params);
 		this.TEXTURES = params.textures || [];		
 		this.TEXTURES_LOADED = [];
-		
+		this.TEXTURES_CURRENT = 0;
+
 		this.DRAW_MODE = false;
 		this.PAN_MODE = false;
 		this.SPACEBAR_PRESSED = false;
-
 
 		this.world_coord = [0,0];
 		this.p_offset = {top:0,left:0};
@@ -22,11 +22,11 @@ var Painter = {
 		this.posY=0;
 		this.lastX=0;
 		this.lastY=0;
-
-		this.SCALE_ASPECT = 1;
 		
 		this.BRUSH = params.brush;
 		this.ZOOM = params.zoom;		
+
+		this.SCALE_ASPECT = 1;
 
 		this.pre_build();		
 		this.recalc_size();
@@ -58,23 +58,61 @@ var Painter = {
 				img.onload = function(){					
 					_this.TEXTURES_LOADED.push(this);
 					if(_this.textures_loaded_all()){
+						_this.set_texture(0);
 						_this.set_status("all ready to draw");
+
 					}
 				}
 			}
 		}		
 	},
+
 	pre_build:function() {
-		var bounds = this.get_bounds();
-		this.$painter.css({width:bounds.w,height:bounds.h,overflow:'hidden'});
+		
+
+							// _this.SCALE_ASPECT = _this.ZOOM.get_scale()/100;	
+						// _this.canvas_update_pos();
+
+		var b = this.get_bounds();
+		
+		this.$painter.css({width:this.PARAM.w,height:this.PARAM.h,overflow:'hidden'});
+
 		this.$canvas = $("<canvas></canvas>");
-		this.$canvas.attr({width:bounds.w*2,height:bounds.h*2});
+		this.$canvas.attr({width:this.PARAM.w*2,height:this.PARAM.h*2});
 		this.$canvas.css({background:'#ffffff',position:'absolute'});			
-		this.$canvas.css({width:bounds.w,height:bounds.h,left:bounds.left,top:bounds.top});
+
+		this.$canvas.css({width:b.w,height:b.h,left:b.left,top:b.top});
 		this.$painter.append(this.$canvas);
 		this.ctx = this.$canvas[0].getContext('2d');
 		this.PARAM.onready && this.PARAM.onready();	
 		this.set_status("loading textures...");
+
+		this.bg_canvas = document.createElement('canvas');
+		this.bg_ctx = this.bg_canvas.getContext('2d');
+		this.bg_canvas.width = b.w*2;
+		this.bg_canvas.height = b.h*2;
+		this.draw_bg_canvas();
+
+		this.brush_texture_canvas = document.createElement('canvas');
+		this.brush_texture_ctx = this.brush_texture_canvas.getContext('2d',{willReadFrequently: true});
+		this.brush_texture_canvas.width = b.w*2;
+		this.brush_texture_canvas.height = b.h*2;
+
+		this.user_canvas = document.createElement('canvas');
+		this.user_ctx = this.user_canvas.getContext('2d');
+		this.user_canvas.width = b.w*2;
+		this.user_canvas.height = b.h*2;
+
+		this.compose();
+
+	},
+	set_texture:function(index){
+		if(index > this.TEXTURES_LOADED.length-1) { console.log('wrong texture index'); return false; };
+		var w = this.$canvas[0].width;
+		var h = this.$canvas[0].height;
+		this.TEXTURES_CURRENT = index;
+		var img = this.TEXTURES_LOADED[this.TEXTURES_CURRENT];
+		this.brush_texture_ctx.drawImage(img,0,0,img.width,img.height,0,0,w,h);
 	},
 	get_bounds:function(){
 		var w = this.PARAM.w;
@@ -87,21 +125,23 @@ var Painter = {
 			return {w:w*s, h:h*s, left:w_coord[0]+(w-w*s)/2, top:w_coord[1]+(h-h*s)/2};
 		}		
 	},
+	compose:function(){		
+		this.ctx.drawImage(this.bg_canvas,0,0); 
+		this.ctx.drawImage(this.user_canvas,0,0); 
+	},
 	canvas_update_pos:function(){		
 		var b = this.get_bounds();
 		this.$canvas.css({width:b.w,height:b.h,left:b.left,top:b.top});		
 	},
-	recalc_size:function() {
+	recalc_size:function() {		
 		var $p = this.$painter;
 		this.p_offset = {top:$p.offset().top,left:$p.offset().left};			
-		this.pixel_size = $p.width()/this.$canvas[0].width;		
-		console.log('p_offset',this.p_offset)
+		this.pixel_size = $p.width()/this.$canvas[0].width;	
 	},
 	behavior:function() {
 		var _this=this;		
 
 		this.$painter[0].onmousemove = function(event){
-
 			if(_this.DRAW_MODE){
 				var s = _this.SCALE_ASPECT;
 				var b = _this.get_bounds();
@@ -110,12 +150,13 @@ var Painter = {
 				_this.posX = ((event.pageX-_this.p_offset.left- b.left) / _this.pixel_size)/s;
 				_this.posY = ((event.pageY-_this.p_offset.top- b.top) / _this.pixel_size)/s;				
 				_this.draw();
+				_this.compose();
 			};
 			if(_this.PAN_MODE){
 				var x = event.pageX - _this.pan_coord.deltaX;
 				var y = event.pageY - _this.pan_coord.deltaY;
 				_this.world_coord = [x,y];
-				_this.canvas_update_pos();
+				_this.canvas_update_pos();				
 			}
 		};	
 
@@ -138,7 +179,8 @@ var Painter = {
 				_this.posY = (event.pageY-_this.p_offset.top- b.top) / _this.pixel_size /s;
 				_this.lastX = _this.posX;
 				_this.lastY = _this.posY;				
-				_this.draw_start_cap();				
+				_this.draw_start_cap();	
+				_this.compose();
 			}
 
 		};
@@ -217,22 +259,33 @@ var Painter = {
 	},
 	clear:function(){
 		var _this=this;
-	  	this.ctx.fillStyle = "#00000000";
-	  	this.ctx.save();
-	  	this.ctx.globalCompositeOperation='source-out';	  	
-	  	this.ctx.rect(0,0,_this.$canvas[0].width,_this.$canvas[0].height);  
-	  	this.ctx.fill();
-	  	this.ctx.restore();
+		var w = _this.$canvas[0].width;
+		var h = _this.$canvas[0].height;
+		var arr_ctx = [this.ctx,this.user_ctx];
+		for(var i in arr_ctx){
+		  	arr_ctx[i].fillStyle = "#00000000";
+		  	arr_ctx[i].save();
+		  	arr_ctx[i].globalCompositeOperation='source-out';	  	
+		  	arr_ctx[i].rect(0,0,w,h);
+		  	arr_ctx[i].fill();
+		  	arr_ctx[i].restore();
+		}
+		this.compose();
 		// this.ctx2 = new canvas2pdf.PdfContext(blobStream());
 	},
 	draw:function() {
-		this.draw_line(this.ctx);
+		this.draw_line(this.user_ctx);
+		this.brush_show_texture(this.user_ctx);
 	},
 	draw_start_cap:function() {
-		this.draw_circle(this.ctx);		
+		this.draw_circle(this.user_ctx);		
+		this.brush_show_texture(this.user_ctx);
 	},
-	get_color:function() {		
-		return "#000000";
+	get_color:function(){
+		var x = Math.floor(this.posX);
+		var y = Math.floor(this.posY);		
+		var color = this.brush_texture_ctx.getImageData(x, y, 1, 1).data;
+		return 'rgba('+color[0]+','+color[1]+','+color[2]+','+color[3]+')';
 	},	
 	get_color_rand:function() {
 		var r= Math.floor(Math.random() * 254);
@@ -240,10 +293,32 @@ var Painter = {
 		var b= Math.floor(Math.random() * 254);
 		return 'rgba('+r+','+g+','+b+',1)';
 	},
-	get_paper_texture:function(){
-
-	},	
+	brush_show_texture:function(ctx){
+		var _this=this;
+		this.TMR_BRUSH_TEXTURE && clearTimeout(this.TMR_BRUSH_TEXTURE); 
+		this.TMR_BRUSH_TEXTURE = setTimeout(function(){
+			ctx.save();
+			ctx.globalCompositeOperation='source-atop';			
+			var img = _this.brush_texture_canvas;
+			ctx.drawImage(img, 0, 0);
+			ctx.restore();
+			_this.compose();
+		},0);
+	},
+	draw_bg_canvas:function(){
+		var ctx = this.bg_ctx;
+		var w = this.$canvas[0].width;
+		var h = this.$canvas[0].height;
+		var counter = -1;
+		var row_height = 10;
+		for(var i=0;i<100;i++){
+			counter*=-1;
+			ctx.fillStyle = counter>0?"#000000":"#444444";
+			ctx.fillRect(0, i*row_height, w, row_height);
+		}		
+	},
 	draw_line:function(ctx) {		
+		var _this=this;
 		
 		ctx.strokeStyle = this.get_color();
 
@@ -255,6 +330,8 @@ var Painter = {
 		var posY = this.posY;
 		var w = this.$canvas[0].width;
 		var h = this.$canvas[0].height;
+
+
 		// ctx.lineWidth = Math.min(h,this.gCounter);
 		// var delta = Math.hypot(this.lastX - posX, this.lastY - posY);
 		// if(delta<h/3) return false;
@@ -262,17 +339,9 @@ var Painter = {
 
 		// this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);
 		
-		ctx.save();
+		// ctx.save();
 		
-		// ctx.globalCompositeOperation = "destination-over";
-		var counter = -1;
-		var row_height = 30;
-		for(var i=0;i<10;i++){
-			counter*=-1;
-			ctx.fillStyle = counter>0?"red":"#ffffff00";
-			ctx.fillRect(0, i*row_height, w, row_height);
-		}	
-		ctx.restore();
+
 
 		ctx.lineWidth = brush_size;
 		ctx.beginPath();       
@@ -280,12 +349,7 @@ var Painter = {
 		ctx.lineTo(posX,posY);  			
 		if(this.BRUSH && this.BRUSH.get_drawing_mode()){
 			//drawing
-			ctx.stroke();
-			ctx.save();
-			ctx.globalCompositeOperation='source-atop';
-			var img = this.TEXTURES_LOADED[0]; 
-			this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);
-			ctx.restore();
+			ctx.stroke();			
 		}else{
 			//erasing
 			ctx.save();	
@@ -299,25 +363,22 @@ var Painter = {
 	
 		// var h = Math.hypot(this.lastX - this.posX, this.lastY - this.posY);
 		// var radius = Math.min(h,30);
+
 		var radius = this.BRUSH.get_size()/2;
 		// var s = this.SCALE_ASPECT;
 		var b = this.get_bounds();
+		var w = this.$canvas[0].width;
+		var h = this.$canvas[0].height;
 			
 			ctx.beginPath();
-			ctx.arc(this.posX,this.posY, radius, 0, 2 * Math.PI, false);
-			// console.log('this.posX,this.posY',this.posX,this.posY)
+			ctx.arc(this.posX,this.posY, radius, 0, 2 * Math.PI, false);			
 			ctx.fillStyle = this.get_color();			
 			ctx.lineWidth = 0;
 			ctx.strokeStyle = '#00000000';
 					
 		if(this.BRUSH && this.BRUSH.get_drawing_mode()){
 			ctx.stroke();
-			ctx.fill();
-			ctx.save();
-			ctx.globalCompositeOperation='source-atop';
-			var img = this.TEXTURES_LOADED[0]; 
-			this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);				
-			ctx.restore();			
+			ctx.fill();			
 		}else{
 			ctx.save();	
 			ctx.globalCompositeOperation='destination-out';
@@ -427,7 +488,7 @@ var PainterZoom = {
 	init:function(painter_id){		
 		console.log("init zoom");
 		this.$parent = $('#'+painter_id);
-		this.SCALE = 100;		
+		this.SCALE = 80;		
 		this.build();
 		return this;
 	},
