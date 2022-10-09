@@ -242,7 +242,10 @@ var Painter = {
 		  }			
 		});
 
-		$(this.CANCELSYSTEM).on('make-cancel',function(){		
+		$(this.CANCELSYSTEM).on('make-cancel',function(e,canvas){					
+			_this.user_ctx.clearRect(0, 0, _this.user_ctx.canvas.width, _this.user_ctx.canvas.height)
+			_this.user_ctx.drawImage(canvas,0,0);
+			_this.compose();
 			console.log("make cancel!")
 		});
 
@@ -580,6 +583,7 @@ var PainterCancelSystem = {
 	init:function(painter_id,max_cancel_steps) {
 		this.ARR_SNAPSHOTS = [];
 		this.MAX_STEPS = max_cancel_steps;
+		this.LAST_ACTION = false; 
 		this.behavior();
 		this.update_status();
 		return this;
@@ -591,15 +595,20 @@ var PainterCancelSystem = {
 		var ctx = cnv.getContext('2d');
 		ctx.drawImage(canvas,0,0);		
 		this.ARR_SNAPSHOTS.push(cnv);
+		this.LAST_ACTION = "SNAPSHOT";
 		console.log('making snapshot')
 		this.update_status();
 	},
-	make_cancel:function() {
-		if(!this.ARR_SNAPSHOTS.length){return false;}
+	make_cancel:function() {		
+		
+		if(this.LAST_ACTION==="SNAPSHOT"){this.ARR_SNAPSHOTS.pop();}
 		var canvas = this.ARR_SNAPSHOTS.pop();
-		$(this).trigger('make-cancel');
-		this.update_status();
-		return canvas;
+		// var canvas = this.ARR_SNAPSHOTS.pop();
+		if(canvas){
+			this.LAST_ACTION = "CANCEL";
+			$(this).trigger('make-cancel',canvas);		
+			this.update_status();
+		}
 	},
 	behavior:function() {
 		var _this=this;
