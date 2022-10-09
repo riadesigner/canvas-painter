@@ -6,9 +6,11 @@ var Painter = {
 		var params = params || {};
 		
 		this.PARAM = $.extend({w:w,h:h},params);
+
 		this.TEXTURES = params.textures || [];		
 		this.TEXTURES_LOADED = [];
 		this.TEXTURES_CURRENT = 0;
+		this.PIXEL_ASPECT = 2;
 
 		this.DRAW_MODE = false;
 		this.PAN_MODE = false;
@@ -22,11 +24,12 @@ var Painter = {
 		this.posY=0;
 		this.lastX=0;
 		this.lastY=0;
-		
+
 		this.BRUSH = params.brush;
 		this.ZOOM = params.zoom;		
 
-		this.SCALE_ASPECT = 1;
+		var init_scale = this.PARAM.init_scale?this.PARAM.init_scale:1;		
+		this.SCALE_ASPECT = init_scale;
 
 		this.pre_build();		
 		this.recalc_size();
@@ -69,28 +72,29 @@ var Painter = {
 
 	pre_build:function() {
 		
-
-							// _this.SCALE_ASPECT = _this.ZOOM.get_scale()/100;	
-						// _this.canvas_update_pos();
+		this.CANVAS_WIDTH = this.PARAM.w * this.PIXEL_ASPECT;
+		this.CANVAS_HEIGHT = this.PARAM.h * this.PIXEL_ASPECT;
 
 		var b = this.get_bounds();
 		
 		this.$painter.css({width:this.PARAM.w,height:this.PARAM.h,overflow:'hidden'});
 
-		this.$canvas = $("<canvas></canvas>");
-		this.$canvas.attr({width:this.PARAM.w*2,height:this.PARAM.h*2});
-		this.$canvas.css({background:'#ffffff',position:'absolute'});			
+		this.$canvas = $("<canvas></canvas>");		
+		this.$canvas.attr({width:this.CANVAS_WIDTH,height:this.CANVAS_HEIGHT});
 
+		console.log('this.PARAM.w,b.w, b.w*2 ',this.PARAM.w, b.w,  b.w*2)
+		console.log('$p.width()/this.$canvas[0].width !',this.$painter.width(),this.$canvas[0].width)
+
+		this.$canvas.css({background:'#ffffff',position:'absolute'});					
 		this.$canvas.css({width:b.w,height:b.h,left:b.left,top:b.top});
-		this.$painter.append(this.$canvas);
-		this.ctx = this.$canvas[0].getContext('2d');
-		this.PARAM.onready && this.PARAM.onready();	
-		this.set_status("loading textures...");
 
+		this.$painter.append(this.$canvas);		
+		this.ctx = this.$canvas[0].getContext('2d');
+		
 		this.bg_canvas = document.createElement('canvas');
 		this.bg_ctx = this.bg_canvas.getContext('2d');
-		this.bg_canvas.width = b.w*2;
-		this.bg_canvas.height = b.h*2;
+		this.bg_canvas.width = this.CANVAS_WIDTH;
+		this.bg_canvas.height = this.CANVAS_HEIGHT;
 		this.draw_bg_canvas();
 
 		this.brush_texture_canvas = document.createElement('canvas');
@@ -100,9 +104,11 @@ var Painter = {
 
 		this.user_canvas = document.createElement('canvas');
 		this.user_ctx = this.user_canvas.getContext('2d');
-		this.user_canvas.width = b.w*2;
-		this.user_canvas.height = b.h*2;
+		this.user_canvas.width = this.CANVAS_WIDTH;
+		this.user_canvas.height = this.CANVAS_HEIGHT;
 
+		this.PARAM.onready && this.PARAM.onready();	
+		this.set_status("loading textures...");
 		this.compose();
 
 	},
@@ -116,8 +122,8 @@ var Painter = {
 	},
 	get_bounds:function(){
 		var w = this.PARAM.w;
-		var h = this.PARAM.h;		
-		var s = this.SCALE_ASPECT;
+		var h = this.PARAM.h;	
+		var s = this.SCALE_ASPECT;		
 		var w_coord = this.world_coord;
 		if(s==1){
 			return {w:w,h:h,left:w_coord[0],top:w_coord[1]};
@@ -137,6 +143,8 @@ var Painter = {
 		var $p = this.$painter;
 		this.p_offset = {top:$p.offset().top,left:$p.offset().left};			
 		this.pixel_size = $p.width()/this.$canvas[0].width;	
+		console.log('$p.width()/this.$canvas[0].width',$p.width(),this.$canvas[0].width)
+		console.log('this.pixel_size',this.pixel_size)
 	},
 	behavior:function() {
 		var _this=this;		
@@ -221,6 +229,7 @@ var Painter = {
 		$(this.ZOOM).on('scale-updated',function(){		
 			_this.SCALE_ASPECT = _this.ZOOM.get_scale()/100;	
 			_this.canvas_update_pos();
+			console.log('_this.pixel_size',_this.pixel_size);
 		});
 		
 		// document.getElementById('btn-save').onclick = function(){ _this.save_to_pdf();}	
@@ -400,11 +409,12 @@ var Painter = {
 
 
 var PainterBrush = {
-	init:function(painter_id, min,max,step) {
+	init:function(painter_id, arr_params) {
+		
+		this.BRUSH_SIZE_MIN = arr_params[0];
+		this.BRUSH_SIZE_MAX = arr_params[1];
+		this.BRUSH_SIZE_STEP = arr_params[2];
 
-		this.BRUSH_SIZE_MIN = min;
-		this.BRUSH_SIZE_MAX = max;
-		this.BRUSH_SIZE_STEP = step;
 		this.BRUSH_SIZE_CURRENT = (this.BRUSH_SIZE_MAX-this.BRUSH_SIZE_MIN)/2+this.BRUSH_SIZE_MIN;		
 		this.DRAWING_MODE = true;
 
@@ -485,10 +495,12 @@ var PainterBrush = {
 };
 
 var PainterZoom = {
-	init:function(painter_id){		
+	init:function(painter_id,init_scale){		
 		console.log("init zoom");
 		this.$parent = $('#'+painter_id);
-		this.SCALE = 80;		
+		var init_scale = init_scale?init_scale:1;
+		this.SCALE = init_scale*100;	
+		this.STEP_SCALE = 15;	
 		this.build();
 		return this;
 	},
@@ -530,12 +542,12 @@ var PainterZoom = {
 		});		
 	},
 	zoom_in:function(){
-		this.SCALE +=10;
+		this.SCALE +=this.STEP_SCALE;
 		this.update_status();		
 		$(this).trigger('scale-updated');
 	},
 	zoom_out:function(){
-		this.SCALE -=10;
+		this.SCALE -=this.STEP_SCALE;
 		this.update_status();
 		$(this).trigger('scale-updated');
 	}
@@ -577,14 +589,22 @@ var PainterStatusbar = {
 
 $(function(){	
 
-	Painter.init('painter',1000,500,{
+	var CFG = {
+		width:1000,
+		height:500,
+		init_scale:.8,		
+		brush_params:[5,60,5]
+	};
+
+	Painter.init('painter',CFG.width,CFG.height,{
 		textures:["img/img1.jpg"],		
 		brush:PainterBrush,
 		zoom:PainterZoom,
 		statusbar:PainterStatusbar,
+		init_scale:CFG.init_scale,
 		onready:function(){
-			this.brush.init('painter',10,60,2);
-			this.zoom.init('painter');
+			this.brush.init('painter',CFG.brush_params);
+			this.zoom.init('painter',CFG.init_scale);
 			this.statusbar.init('painter',[Painter,this.brush,this.zoom]);			
 		}
 	});
