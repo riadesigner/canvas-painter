@@ -99,8 +99,8 @@ var Painter = {
 
 		this.brush_texture_canvas = document.createElement('canvas');
 		this.brush_texture_ctx = this.brush_texture_canvas.getContext('2d',{willReadFrequently: true});
-		this.brush_texture_canvas.width = b.w*2;
-		this.brush_texture_canvas.height = b.h*2;
+		this.brush_texture_canvas.width = this.CANVAS_WIDTH;
+		this.brush_texture_canvas.height = this.CANVAS_HEIGHT;
 
 		this.user_canvas = document.createElement('canvas');
 		this.user_ctx = this.user_canvas.getContext('2d');
