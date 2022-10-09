@@ -583,12 +583,15 @@ var PainterCancelSystem = {
 	init:function(painter_id,max_cancel_steps) {
 		this.ARR_SNAPSHOTS = [];
 		this.MAX_STEPS = max_cancel_steps;
-		this.LAST_ACTION = false; 
+		this.LAST_ACTION = false;
 		this.behavior();
 		this.update_status();
 		return this;
 	},
 	make_snapshot:function(canvas) {
+		if(!this.ARR_SNAPSHOTS.length){
+			// var cnv_tra = document.createElement('canvas');	
+		}
 		var cnv = document.createElement('canvas');
 		cnv.width = canvas.width;
 		cnv.height = canvas.height;
@@ -602,7 +605,7 @@ var PainterCancelSystem = {
 	make_cancel:function() {		
 		
 		if(this.LAST_ACTION==="SNAPSHOT"){this.ARR_SNAPSHOTS.pop();}
-		var canvas = this.ARR_SNAPSHOTS.pop();
+		// var canvas = this.ARR_SNAPSHOTS.pop();
 		// var canvas = this.ARR_SNAPSHOTS.pop();
 		if(canvas){
 			this.LAST_ACTION = "CANCEL";
