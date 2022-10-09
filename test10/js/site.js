@@ -27,6 +27,7 @@ var Painter = {
 
 		this.BRUSH = params.brush;
 		this.ZOOM = params.zoom;		
+		this.CANCELSYSTEM = params.cancelSystem;		
 
 		var init_scale = this.PARAM.init_scale?this.PARAM.init_scale:1;		
 		this.SCALE_ASPECT = init_scale;
@@ -82,9 +83,6 @@ var Painter = {
 		this.$canvas = $("<canvas></canvas>");		
 		this.$canvas.attr({width:this.CANVAS_WIDTH,height:this.CANVAS_HEIGHT});
 
-		console.log('this.PARAM.w,b.w, b.w*2 ',this.PARAM.w, b.w,  b.w*2)
-		console.log('$p.width()/this.$canvas[0].width !',this.$painter.width(),this.$canvas[0].width)
-
 		this.$canvas.css({background:'#ffffff',position:'absolute'});					
 		this.$canvas.css({width:b.w,height:b.h,left:b.left,top:b.top});
 
@@ -108,6 +106,7 @@ var Painter = {
 		this.user_canvas.height = this.CANVAS_HEIGHT;
 
 		this.PARAM.onready && this.PARAM.onready();	
+
 		this.set_status("loading textures...");
 		this.compose();
 
@@ -143,8 +142,22 @@ var Painter = {
 		var $p = this.$painter;
 		this.p_offset = {top:$p.offset().top,left:$p.offset().left};			
 		this.pixel_size = $p.width()/this.$canvas[0].width;	
-		console.log('$p.width()/this.$canvas[0].width',$p.width(),this.$canvas[0].width)
-		console.log('this.pixel_size',this.pixel_size)
+	},
+	ending_draw:function() {
+		this.DRAW_MODE = false;
+		this.PAN_MODE = false;
+		this.SPACEBAR_PRESSED = false;		
+		if(this.NEED_TO_SNAPSHOT){
+			this.CANCELSYSTEM.make_snapshot(this.user_canvas);	
+			this.NEED_TO_SNAPSHOT = false;
+		}		
+	},
+	hit_the_canvas:function() {
+		var save_area = 200;
+		var hitted = this.posX>-save_area && this.posY>-save_area 
+			&& this.posX< this.CANVAS_WIDTH+1+save_area 
+			&& this.posY < this.CANVAS_HEIGHT+1+save_area;
+		return hitted;
 	},
 	behavior:function() {
 		var _this=this;		
@@ -179,39 +192,52 @@ var Painter = {
 				};
 			}else{
 				// DRAWING
-				_this.PAN_MODE = false;
-				_this.DRAW_MODE = true;				
 				var s = _this.SCALE_ASPECT;
 				var b = _this.get_bounds();				
 				_this.posX = (event.pageX-_this.p_offset.left- b.left) / _this.pixel_size /s;
 				_this.posY = (event.pageY-_this.p_offset.top- b.top) / _this.pixel_size /s;
-				_this.lastX = _this.posX;
-				_this.lastY = _this.posY;				
-				_this.draw_start_cap();	
-				_this.compose();
+				if(_this.hit_the_canvas()){
+					_this.PAN_MODE = false;
+					_this.DRAW_MODE = true;
+					_this.lastX = _this.posX;
+					_this.lastY = _this.posY;
+					_this.NEED_TO_SNAPSHOT = true;
+					_this.draw_start_cap();	
+					_this.compose();					
+				}								
+
+				console.log('_this.posX,_this.posY',_this.posX,_this.posY)
+
 			}
 
 		};
 
 		this.$painter[0].onmouseup = function(event){
-			_this.DRAW_MODE = false;
-			_this.PAN_MODE = false;
-			_this.SPACEBAR_PRESSED = false;
+			_this.ending_draw();
 		};				
 
 		this.$painter[0].onmouseleave = function(event){
-			_this.DRAW_MODE = false;
-			_this.PAN_MODE = false;
-			_this.SPACEBAR_PRESSED = false;
+			_this.ending_draw();
 		};
 		
 		document.addEventListener('keydown',function(e){			
+			// pan mode
 		  if (e.key == " " || e.code == "Space" || e.keyCode == 32 ) {
 			_this.SPACEBAR_PRESSED = true;
 			_this.DRAW_MODE = false;			
 			document.body.style.cursor = 'grab';
+		  };
+		  // clear all
+		  if (e.key == "c" || e.code == "KeyC" || e.keyCode == 67 ) {
+			_this.clear();	 
+		  }
+		  // cancel last job
+		  if(e.key === 'z' && (e.ctrlKey || e.metaKey) ){ 
+		  	console.log("ctrl/cmd z");
 		  }			
+		  
 		});		
+
 		document.addEventListener('keyup',function(e){			
 		  if (e.key == " " || e.code == "Space" || e.keyCode == 32 ) {		  	
 			_this.SPACEBAR_PRESSED = false;
@@ -220,11 +246,6 @@ var Painter = {
 		  }			
 		});
 
-		document.addEventListener('keydown',function(e){			
-		  if (e.key == "c" || e.code == "KeyC" || e.keyCode == 67 ) {
-			_this.clear();	 
-		  }			
-		});		
 
 		$(this.ZOOM).on('scale-updated',function(){		
 			_this.SCALE_ASPECT = _this.ZOOM.get_scale()/100;	
@@ -553,6 +574,29 @@ var PainterZoom = {
 	}
 };
 
+var PainterCancelSystem = {
+	init:function(painter_id,max_cancel_steps) {
+		this.ARR_SNAPSHOTS = [];
+		this.MAX_STEPS = max_cancel_steps;
+		this.update_status();
+		return this;
+	},
+	make_snapshot:function(canvas) {
+		console.log('make snapshot')
+	},
+	behavior:function() {
+		
+	},
+	get_status:function() {
+		return this.STATUS;
+	},
+	update_status:function() {				
+		this.STATUS = "доступно "+this.ARR_SNAPSHOTS.length+" отмен";
+		$(this).trigger('status-updated');		
+		console.log("update_status",this.get_status());
+	}
+}
+
 var PainterStatusbar = {
 	init:function(painter_id,arr){
 		this.$parent = $('#'+painter_id);
@@ -577,15 +621,19 @@ var PainterStatusbar = {
 		this.$statusbar.find('span:eq('+section+')').html(msg);
 	},
 	build:function(){
+		var str_sections = "";
+		for(var i in this.ARR){
+			str_sections+="<span>1</span>";
+		}
 		this.$statusbar = $([
 			'<div id="painter-status-bar" class="noselect">',
-			'<span>1</span><span>2</span><span>3</span>',
+			str_sections,
 			'</div>'
 			].join(''));
-		this.$parent.append(this.$statusbar);
-		// this.set(PainterBrush.get_status(),1);
+		this.$parent.append(this.$statusbar);		
 	}
 };
+
 
 $(function(){	
 
@@ -593,24 +641,24 @@ $(function(){
 		width:1000,
 		height:500,
 		init_scale:.8,		
-		brush_params:[5,60,5]
+		brush_params:[5,60,5],
+		max_cancel_steps:5
 	};
 
 	Painter.init('painter',CFG.width,CFG.height,{
 		textures:["img/img1.jpg"],		
 		brush:PainterBrush,
 		zoom:PainterZoom,
+		cancelSystem:PainterCancelSystem,
 		statusbar:PainterStatusbar,
-		init_scale:CFG.init_scale,
+		init_scale:CFG.init_scale,		
 		onready:function(){
 			this.brush.init('painter',CFG.brush_params);
 			this.zoom.init('painter',CFG.init_scale);
-			this.statusbar.init('painter',[Painter,this.brush,this.zoom]);			
+			this.cancelSystem.init('painter',CFG.max_cancel_steps);
+			this.statusbar.init('painter',[Painter,this.brush,this.zoom, this.cancelSystem]);			
 		}
 	});
 
  
 });
-
-
-
