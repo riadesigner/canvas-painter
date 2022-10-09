@@ -231,10 +231,6 @@ var Painter = {
 		  if (e.key == "c" || e.code == "KeyC" || e.keyCode == 67 ) {
 			_this.clear();	 
 		  }
-		  // cancel last job
-		  if(e.key === 'z' && (e.ctrlKey || e.metaKey) ){ 
-		  	console.log("ctrl/cmd z");
-		  }			
 		  
 		});		
 
@@ -246,6 +242,9 @@ var Painter = {
 		  }			
 		});
 
+		$(this.CANCELSYSTEM).on('make-cancel',function(){		
+			console.log("make cancel!")
+		});
 
 		$(this.ZOOM).on('scale-updated',function(){		
 			_this.SCALE_ASPECT = _this.ZOOM.get_scale()/100;	
@@ -255,6 +254,9 @@ var Painter = {
 		
 		// document.getElementById('btn-save').onclick = function(){ _this.save_to_pdf();}	
 
+	},
+	make_cancel:function() {
+		// this.CANCELSYSTEM.
 	},
 	save_to_pdf:function(){
 
@@ -578,14 +580,34 @@ var PainterCancelSystem = {
 	init:function(painter_id,max_cancel_steps) {
 		this.ARR_SNAPSHOTS = [];
 		this.MAX_STEPS = max_cancel_steps;
+		this.behavior();
 		this.update_status();
 		return this;
 	},
 	make_snapshot:function(canvas) {
-		console.log('make snapshot')
+		var cnv = document.createElement('canvas');
+		cnv.width = canvas.width;
+		cnv.height = canvas.height;
+		var ctx = cnv.getContext('2d');
+		ctx.drawImage(canvas,0,0);		
+		this.ARR_SNAPSHOTS.push(cnv);
+		console.log('making snapshot')
+		this.update_status();
+	},
+	make_cancel:function() {
+		if(!this.ARR_SNAPSHOTS.length){return false;}
+		var canvas = this.ARR_SNAPSHOTS.pop();
+		$(this).trigger('make-cancel');
+		this.update_status();
+		return canvas;
 	},
 	behavior:function() {
-		
+		var _this=this;
+		document.addEventListener('keydown',function(e){		  
+		  if(e.key === 'z' && (e.ctrlKey || e.metaKey) ){ 
+		  	_this.make_cancel();		  	
+		  }			  
+		});			
 	},
 	get_status:function() {
 		return this.STATUS;
