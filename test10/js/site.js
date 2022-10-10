@@ -107,6 +107,8 @@ var Painter = {
 
 		this.PARAM.onready && this.PARAM.onready();	
 
+		this.CANCELSYSTEM.make_snapshot(this.user_canvas);
+
 		this.set_status("loading textures...");
 		this.compose();
 
@@ -582,50 +584,75 @@ var PainterZoom = {
 var PainterCancelSystem = {
 	init:function(painter_id,max_cancel_steps) {
 		this.ARR_SNAPSHOTS = [];
-		this.MAX_STEPS = max_cancel_steps;
-		this.LAST_ACTION = false;
+		this.MAX_STEPS = max_cancel_steps;		
+		this.CURRENT = -1;
 		this.behavior();
 		this.update_status();
 		return this;
 	},
 	make_snapshot:function(canvas) {
-		if(!this.ARR_SNAPSHOTS.length){
-			// var cnv_tra = document.createElement('canvas');	
-		}
 		var cnv = document.createElement('canvas');
 		cnv.width = canvas.width;
 		cnv.height = canvas.height;
 		var ctx = cnv.getContext('2d');
 		ctx.drawImage(canvas,0,0);		
+		if(this.ARR_SNAPSHOTS.length>this.MAX_STEPS){ 
+			this.ARR_SNAPSHOTS.shift();
+			this.CURRENT--;
+		};
+		
+		console.log('this.ARR_SNAPSHOTS0',this.ARR_SNAPSHOTS.length)		
+		// if(this.ARR_SNAPSHOTS.length>0){
+			this.ARR_SNAPSHOTS.splice(this.CURRENT+1);	
+		// }
+		
+		console.log('this.ARR_SNAPSHOTS1',this.ARR_SNAPSHOTS.length)		
 		this.ARR_SNAPSHOTS.push(cnv);
-		this.LAST_ACTION = "SNAPSHOT";
+		console.log('this.ARR_SNAPSHOTS2',this.ARR_SNAPSHOTS.length)
+		this.CURRENT++;
+		console.log('this.CURRENT',this.CURRENT)
+
 		console.log('making snapshot')
 		this.update_status();
 	},
-	make_cancel:function() {		
+	make_cancel:function() {
 		
-		if(this.LAST_ACTION==="SNAPSHOT"){this.ARR_SNAPSHOTS.pop();}
-		// var canvas = this.ARR_SNAPSHOTS.pop();
-		// var canvas = this.ARR_SNAPSHOTS.pop();
-		if(canvas){
-			this.LAST_ACTION = "CANCEL";
-			$(this).trigger('make-cancel',canvas);		
+		if(this.ARR_SNAPSHOTS.length<1) return false;
+
+		if(this.ARR_SNAPSHOTS[this.CURRENT-1]){
+			this.CURRENT--;
+			var canvas = this.ARR_SNAPSHOTS[this.CURRENT];						
+			console.log('this.ARR_SNAPSHOTS3',this.ARR_SNAPSHOTS.length)
+			console.log('this.CURRENT',this.CURRENT)
+			$(this).trigger('make-cancel',canvas);					
 			this.update_status();
 		}
 	},
+	// make_restore:function() {
+	// 	if(this.CURRENT>-1 && this.ARR_SNAPSHOTS[this.CURRENT+1]){
+	// 		this.CURRENT++;
+	// 		var canvas = this.ARR_SNAPSHOTS[this.CURRENT];			
+	// 		$(this).trigger('make-cancel',canvas);
+	// 		this.update_status();
+	// 	}
+	// },
 	behavior:function() {
 		var _this=this;
-		document.addEventListener('keydown',function(e){		  
+		document.addEventListener('keydown',function(e){		  			
+			// console.log('e',e);
 		  if(e.key === 'z' && (e.ctrlKey || e.metaKey) ){ 
+		  	console.log("make cancel")
 		  	_this.make_cancel();		  	
-		  }			  
+		  }
 		});			
 	},
 	get_status:function() {
 		return this.STATUS;
 	},
 	update_status:function() {				
-		this.STATUS = "доступно "+this.ARR_SNAPSHOTS.length+" отмен";
+		// var remainder =  this.ARR_SNAPSHOTS.length - this.CURRENT;
+		var remainder =  this.CURRENT;
+		this.STATUS = "доступно "+remainder+" отмен";
 		$(this).trigger('status-updated');		
 		console.log("update_status",this.get_status());
 	}
