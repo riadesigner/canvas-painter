@@ -596,10 +596,8 @@ var PainterCancelSystem = {
 		cnv.height = canvas.height;
 		var ctx = cnv.getContext('2d');
 		ctx.drawImage(canvas,0,0);		
-		if(this.ARR_SNAPSHOTS.length>this.MAX_STEPS){ 
-			this.ARR_SNAPSHOTS.shift();
-			this.CURRENT--;
-		};
+		
+
 		
 		console.log('this.ARR_SNAPSHOTS0',this.ARR_SNAPSHOTS.length)		
 		// if(this.ARR_SNAPSHOTS.length>0){
@@ -612,12 +610,17 @@ var PainterCancelSystem = {
 		this.CURRENT++;
 		console.log('this.CURRENT',this.CURRENT)
 
-		console.log('making snapshot')
+		if(this.ARR_SNAPSHOTS.length>this.MAX_STEPS+1){ 
+			this.ARR_SNAPSHOTS.shift();
+			this.CURRENT--;
+		};
+
+		console.log('making snapshot')		
 		this.update_status();
 	},
 	make_cancel:function() {
 		
-		if(this.ARR_SNAPSHOTS.length<1) return false;
+		// if(this.CURRENT<0) return false;
 
 		if(this.ARR_SNAPSHOTS[this.CURRENT-1]){
 			this.CURRENT--;
