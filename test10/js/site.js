@@ -26,7 +26,8 @@ var Painter = {
 		this.lastY=0;
 
 		this.BRUSH = params.brush;
-		this.ZOOM = params.zoom;		
+		this.ZOOM = params.zoom;
+		this.models = params.PainterModel;
 		this.CANCELSYSTEM = params.cancelSystem;		
 
 		var init_scale = this.PARAM.init_scale?this.PARAM.init_scale:1;		
@@ -698,6 +699,50 @@ var PainterStatusbar = {
 	}
 };
 
+var PainterModel = {
+	init:function(painter_id,arr_models) {
+		this.$parent = $('#'+painter_id);
+		this.ARR = arr_models || [];
+		this.ARR_LOADED = [];
+		this.set_status("Загружаются модели...");
+		this.set_current(0);		
+		this.preload(0);
+		// this.behavior();
+		return this;
+	},
+	behavior:function() {
+		
+	},
+	set_all_loaded:function() {
+		$(this).trigger('all-loaded');
+	},
+	get_status:function() {
+		return this.STATUS;
+	},
+	set_status:function(msg) {
+		this.STATUS = msg;
+		$(this).trigger('status-updated');
+	},	
+	preload:function() {
+		var _this=this;								
+		this.set_status("Загружено моделей: "+ _this.ARR_LOADED.length);						
+		var src = this.ARR.shift();
+		if(src){
+			var img = new Image();
+			img.onload = function() {
+				_this.ARR_LOADED.push(this);
+				_this.preload();
+			};
+			img.src = src;
+		}else{
+			_this.set_all_loaded();	
+		}
+	},
+	set_current:function(index) {
+		this.CURRENT = index;
+	}
+
+};
 
 $(function(){	
 
@@ -706,17 +751,21 @@ $(function(){
 		height:500,
 		init_scale:.8,		
 		brush_params:[5,60,5],
-		max_cancel_steps:5
+		max_cancel_steps:5,
+		textures:["img/img1.jpg"],
+		models:["img/model-1.png"]		
 	};
 
 	Painter.init('painter',CFG.width,CFG.height,{
-		textures:["img/img1.jpg"],		
+		textures:CFG.textures,		
 		brush:PainterBrush,
+		models:PainterModel,
 		zoom:PainterZoom,
 		cancelSystem:PainterCancelSystem,
 		statusbar:PainterStatusbar,
 		init_scale:CFG.init_scale,		
 		onready:function(){
+			this.models.init('painter',CFG.models);
 			this.brush.init('painter',CFG.brush_params);
 			this.zoom.init('painter',CFG.init_scale);
 			this.cancelSystem.init('painter',CFG.max_cancel_steps);
