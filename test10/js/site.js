@@ -7,10 +7,6 @@ var Painter = {
 		
 		this.PARAM = $.extend({w:w,h:h},params);
 
-		// this.TEXTURES = params.textures || [];		
-		// this.TEXTURES_LOADED = [];
-		// this.TEXTURES_CURRENT = 0;
-
 		this.PIXEL_ASPECT = 2;
 
 		this.DRAW_MODE = false;
@@ -113,16 +109,23 @@ var Painter = {
 	update_model_layer:function(){
 		var w = this.$canvas[0].width;
 		var h = this.$canvas[0].height;	
+
+
+		var img = this.models.get_image();
 		var k = Math.min(w,h);	
 		var minWidth = k==w;
 		
-		// if(minWidth){
-
-		// }else{
-
-		// }
-		var img = this.models.get_image();
-		this.model_ctx.drawImage(img,0,0,img.width,img.height,0,0,w,h);
+		if(minWidth){			
+			var ratio = img.width/w;
+			var im_w = w;
+			var im_h = img.height/ratio;
+		}else{
+			var ratio = img.height/h;
+			var im_h = h;
+			var im_w = img.width/ratio;			
+		};
+		
+		this.model_ctx.drawImage(img,0,0,img.width,img.height,(w-im_w)/2,(h-im_h)/2,im_w,im_h);
 		console.log('update_model_layer')
 	},	
 
@@ -258,9 +261,9 @@ var Painter = {
 		}		
 	},
 	compose:function(){		
-		this.ctx.drawImage(this.bg_canvas,0,0); 
-		this.ctx.drawImage(this.model_canvas,0,0); 
-		this.ctx.drawImage(this.user_canvas,0,0); 
+		this.ctx.drawImage(this.bg_canvas,0,0); 		
+		this.ctx.drawImage(this.user_canvas,0,0);
+		this.ctx.drawImage(this.model_canvas,0,0);  
 	},
 	canvas_update_pos:function(){		
 		var b = this.get_bounds();
@@ -372,7 +375,8 @@ var Painter = {
 		var h = this.$canvas[0].height;
 		var counter = -1;
 		var row_height = 10;
-		for(var i=0;i<100;i++){
+		var total = h/row_height+1;
+		for(var i=0;i<total;i++){
 			counter*=-1;
 			ctx.fillStyle = counter>0?"#000000":"#444444";
 			ctx.fillRect(0, i*row_height, w, row_height);
@@ -830,7 +834,7 @@ $(function(){
 
 	var CFG = {
 		width:1000,
-		height:500,
+		height:600,
 		init_scale:.8,		
 		brush_params:[5,60,5],
 		max_cancel_steps:5,
@@ -859,3 +863,5 @@ $(function(){
 
  
 });
+
+
