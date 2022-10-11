@@ -57,25 +57,6 @@ var Painter = {
 	textures_loaded_all:function(){
 		return this.TEXTURES.length==this.TEXTURES_LOADED.length;
 	},
-	// textures_preload:function(){
-	// 	var _this=this;		
-	// 	this.TEXTURES_READY = false;		
-	// 	if(this.TEXTURES.length){
-	// 		for(var i in this.TEXTURES){				
-	// 			var img = new Image();
-	// 			img.src = this.TEXTURES[i];
-	// 			img.onload = function(){					
-	// 				_this.TEXTURES_LOADED.push(this);
-	// 				if(_this.textures_loaded_all()){
-	// 					_this.set_texture(0);
-	// 					_this.set_status("all ready to draw");
-
-	// 				}
-	// 			}
-	// 		}
-	// 	}		
-	// },
-
 	pre_build:function() {
 		
 		this.CANVAS_WIDTH = this.PARAM.w * this.PIXEL_ASPECT;
@@ -142,6 +123,7 @@ var Painter = {
 			this.ALL_READY = true;
 			this.update_texture_layer();
 			this.update_model_layer();
+			this.compose();
 			this.set_status("Все готово");
 			return this.ALL_READY;
 		}
