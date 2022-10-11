@@ -112,7 +112,15 @@ var Painter = {
 	},
 	update_model_layer:function(){
 		var w = this.$canvas[0].width;
-		var h = this.$canvas[0].height;		
+		var h = this.$canvas[0].height;	
+		var k = Math.min(w,h);	
+		var minWidth = k==w;
+		
+		// if(minWidth){
+
+		// }else{
+
+		// }
 		var img = this.models.get_image();
 		this.model_ctx.drawImage(img,0,0,img.width,img.height,0,0,w,h);
 		console.log('update_model_layer')
