@@ -855,6 +855,7 @@ $(function(){
 		models:["img/model-1.png"]		
 	};
 
+
 	Painter.init('painter',CFG.size,{		
 		brush:PainterBrush,
 		models:PainterModel,
