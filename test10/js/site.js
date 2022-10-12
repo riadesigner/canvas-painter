@@ -1,11 +1,17 @@
 
 
 var Painter = {
-	init:function(painter_id,w,h,params) {
-		this.$painter = $('#'+painter_id);
+	init:function(painter_id,size,params) {
+
+		this.$painter = $('#'+painter_id);		
 		var params = params || {};
 		
-		this.PARAM = $.extend({w:w,h:h},params);
+		this.PARAM = $.extend({
+				w:size.painter[0],
+				h:size.painter[1],
+				c_w:size.canvas[0],
+				c_h:size.canvas[1]				
+			},params);
 
 		this.PIXEL_ASPECT = 2;
 
@@ -54,9 +60,9 @@ var Painter = {
 		return this.TEXTURES.length==this.TEXTURES_LOADED.length;
 	},
 	pre_build:function() {
-		
-		this.CANVAS_WIDTH = this.PARAM.w * this.PIXEL_ASPECT;
-		this.CANVAS_HEIGHT = this.PARAM.h * this.PIXEL_ASPECT;
+
+		this.CANVAS_WIDTH = this.PARAM.c_w * this.PIXEL_ASPECT;
+		this.CANVAS_HEIGHT = this.PARAM.c_h * this.PIXEL_ASPECT;
 
 		var b = this.get_bounds();
 		
@@ -170,7 +176,7 @@ var Painter = {
 		};	
 
 		this.$painter[0].onmousedown = function(event){	
-			if(!_this.ALL_READY) return false;
+			if(!_this.ALL_READY || _this.ZOOM.is_hover()) return false;
 			if(_this.SPACEBAR_PRESSED){
 				// PAN
 				_this.DRAW_MODE = false;
@@ -250,14 +256,14 @@ var Painter = {
 
 	},
 	get_bounds:function(){
-		var w = this.PARAM.w;
-		var h = this.PARAM.h;	
+		var w = this.PARAM.c_w;
+		var h = this.PARAM.c_h;	
 		var s = this.SCALE_ASPECT;		
 		var w_coord = this.world_coord;
 		if(s==1){
 			return {w:w,h:h,left:w_coord[0],top:w_coord[1]};
 		}else{					
-			return {w:w*s, h:h*s, left:w_coord[0]+(w-w*s)/2, top:w_coord[1]+(h-h*s)/2};
+			return {w:w*s, h:h*s, left:w_coord[0]+(w-w*s)*.5, top:w_coord[1]+(h-h*s)*.2};
 		}		
 	},
 	compose:function(){		
@@ -575,6 +581,9 @@ var PainterZoom = {
 		this.STATUS = msg;		
 		$(this).trigger('status-updated');
 	},
+	is_hover:function() {
+		return this.IS_HOVER;
+	},
 	build:function(){
 		this.$zoom = $([
 			'<div id="painter-zoom-id" class="noselect">',
@@ -596,6 +605,11 @@ var PainterZoom = {
 			_this.zoom_out();
 			return false;
 		});		
+		$('#painter-zoom-id').hover(function() {
+			_this.IS_HOVER = true;
+		},function() {
+			_this.IS_HOVER = false;
+		})
 	},
 	zoom_in:function(){
 		this.SCALE +=this.STEP_SCALE;
@@ -833,16 +847,15 @@ var PainterTexture = {
 $(function(){	
 
 	var CFG = {
-		width:1000,
-		height:600,
-		init_scale:.8,		
+		size:{ painter:[1000,500], canvas:[1000,800]},
+		init_scale:1.8,
 		brush_params:[5,60,5],
 		max_cancel_steps:5,
 		textures:["img/img1.jpg"],
 		models:["img/model-1.png"]		
 	};
 
-	Painter.init('painter',CFG.width,CFG.height,{		
+	Painter.init('painter',CFG.size,{		
 		brush:PainterBrush,
 		models:PainterModel,
 		textures:PainterTexture,
