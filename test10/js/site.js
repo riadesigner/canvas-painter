@@ -3,7 +3,8 @@
 var Painter = {
 	init:function(painter_id,size,params) {
 
-		this.$painter = $('#'+painter_id);		
+		this.$painter = $('#'+painter_id);
+
 		var params = params || {};
 		
 		this.PARAM = $.extend({
@@ -12,6 +13,11 @@ var Painter = {
 				c_w:size.canvas[0],
 				c_h:size.canvas[1]				
 			},params);
+
+		// update for real bounds
+		this.PARAM.w = this.$painter.width();
+		this.PARAM.h = this.$painter.height();
+		console.log('this.PARAM',this.PARAM)
 
 		this.PIXEL_ASPECT = 2;
 
@@ -66,7 +72,7 @@ var Painter = {
 
 		var b = this.get_bounds();
 		
-		this.$painter.css({width:this.PARAM.w,height:this.PARAM.h,overflow:'hidden'});
+		// this.$painter.css({width:this.PARAM.w,height:this.PARAM.h,overflow:'hidden'});
 
 		this.$canvas = $("<canvas></canvas>");		
 		this.$canvas.attr({width:this.CANVAS_WIDTH,height:this.CANVAS_HEIGHT});
@@ -189,8 +195,15 @@ var Painter = {
 				// DRAWING
 				var s = _this.SCALE_ASPECT;
 				var b = _this.get_bounds();				
-				_this.posX = (event.pageX-_this.p_offset.left- b.left) / _this.pixel_size /s;
-				_this.posY = (event.pageY-_this.p_offset.top- b.top) / _this.pixel_size /s;
+				// _this.posX = (event.pageX-_this.p_offset.left- b.left) / _this.pixel_size /s;
+				// _this.posY = (event.pageY-_this.p_offset.top- b.top) / _this.pixel_size /s;
+
+				_this.posX = (event.pageX - _this.p_offset.left)/s;
+				_this.posY = 100;
+				console.log((event.pageX - _this.p_offset.left)/_this.pixel_size/s);
+				console.log('_this.SCALE_ASPECT',_this.SCALE_ASPECT);
+				// xxx
+
 				if(_this.hit_the_canvas()){
 					_this.PAN_MODE = false;
 					_this.DRAW_MODE = true;
@@ -263,7 +276,8 @@ var Painter = {
 		if(s==1){
 			return {w:w,h:h,left:w_coord[0],top:w_coord[1]};
 		}else{					
-			return {w:w*s, h:h*s, left:w_coord[0]+(w-w*s)*.5, top:w_coord[1]+(h-h*s)*.2};
+			// return {w:w*s, h:h*s, left:w_coord[0]+(w-w*s)*.5, top:w_coord[1]+(h-h*s)*.2};
+			return {w:w*s, h:h*s, left:0, top:0};
 		}		
 	},
 	compose:function(){		
@@ -275,6 +289,7 @@ var Painter = {
 		var b = this.get_bounds();
 		this.$canvas.css({width:b.w,height:b.h,left:b.left,top:b.top});		
 	},
+
 	recalc_size:function() {		
 		var $p = this.$painter;
 		this.p_offset = {top:$p.offset().top,left:$p.offset().left};			
@@ -637,27 +652,14 @@ var PainterCancelSystem = {
 		cnv.width = canvas.width;
 		cnv.height = canvas.height;
 		var ctx = cnv.getContext('2d');
-		ctx.drawImage(canvas,0,0);		
-		
-
-		
-		console.log('this.ARR_SNAPSHOTS0',this.ARR_SNAPSHOTS.length)		
-		// if(this.ARR_SNAPSHOTS.length>0){
-			this.ARR_SNAPSHOTS.splice(this.CURRENT+1);	
-		// }
-		
-		console.log('this.ARR_SNAPSHOTS1',this.ARR_SNAPSHOTS.length)		
-		this.ARR_SNAPSHOTS.push(cnv);
-		console.log('this.ARR_SNAPSHOTS2',this.ARR_SNAPSHOTS.length)
-		this.CURRENT++;
-		console.log('this.CURRENT',this.CURRENT)
-
+		ctx.drawImage(canvas,0,0);
+		this.ARR_SNAPSHOTS.splice(this.CURRENT+1);
+		this.ARR_SNAPSHOTS.push(cnv);		
+		this.CURRENT++;		
 		if(this.ARR_SNAPSHOTS.length>this.MAX_STEPS+1){ 
 			this.ARR_SNAPSHOTS.shift();
 			this.CURRENT--;
-		};
-
-		console.log('making snapshot')		
+		};		
 		this.update_status();
 	},
 	make_cancel:function() {
@@ -848,7 +850,7 @@ $(function(){
 
 	var CFG = {
 		size:{ painter:[1000,500], canvas:[1000,800]},
-		init_scale:1.8,
+		init_scale:.5,
 		brush_params:[5,60,5],
 		max_cancel_steps:5,
 		textures:["img/img1.jpg"],

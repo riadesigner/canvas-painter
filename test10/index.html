@@ -5,9 +5,9 @@
 	<title></title>
 
     <script src="js/jquery.min.js"></script>
-    <script src="lib/pdfkit.js"></script>
+<!--     <script src="lib/pdfkit.js"></script>
     <script src="lib/blob-stream.js"></script>
-    <script src="lib/canvas2pdf.js"></script>    
+    <script src="lib/canvas2pdf.js"></script>     -->
 
     <script src="lib/jquery-ui/jquery-ui.min.js"></script>
     <script src="lib/jquery-ui/jquery.ui.touch-punch.min.js"></script>
@@ -21,17 +21,31 @@
 </head>
 <body>
 
-<p>Painter (png), draw mask, brush size </p>
+<div id="goranskaya-construktor">
+    <main>
+        
+        <div id="painter"></div>
 
-<div id="painter"></div>
+    </main>
+    <footer>
+        <div class="footer-cyber">
+            <a href="https://cyber-brand.ru/" target="_blank"><img src="./i/cyber-logo.png"></a>    
+        </div>
+        <div class="footer-coder">
+            <a href="https://gnezdostudio.ru/" target="_blank">Code: DS-Gnezdo (2022)</a>
+        </div>
+    </footer>
+</div>
 
+
+<!-- 
 <p class='annotation'>Press <span>«C»</span> to clear canvas, <span>«1»</span> to draw mode, <span>«2»</span> to erase mode, <span>«spacebar»</span> to pan canvas </p>
-<!-- <button id="btn-save">Сохранить в pdf</button> -->
+<button id="btn-save">Сохранить в pdf</button>
 
 <div class="all-params">
     <p id='range-1-brush-size-label'>brush size: <span>0</span></p>
     <div id="range-1-brush-size"></div>    
-</div>
+</div> -->
 
 
 <script type="text/javascript" src="js/site.js"></script>

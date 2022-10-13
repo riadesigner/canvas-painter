@@ -3,8 +3,9 @@ body,html{
 	font-family: arial;
 }
 *{box-sizing: border-box;}
-body{
-	padding:10px 20px;
+
+
+body{	
 	background:#333340;
 	color:lightgray;
 }
@@ -18,6 +19,33 @@ body{
                                   supported by Chrome, Edge, Opera and Firefox */
 }
 
+#goranskaya-construktor{
+	width: 100%;
+	height: 100%;
+	background: lightgray;
+	padding:20px 2% 70px 2%; 
+	position: absolute;	
+}
+#goranskaya-construktor main{
+	background: darkgray;width: 100%;
+	height: 100%;border-radius: 8px;
+	position: relative;overflow: hidden;
+}
+#goranskaya-construktor footer{
+position: absolute;bottom: 0;left:0;
+width: 100%;height: 40px;
+background: black;display: flex;
+align-items: center;
+
+}
+#goranskaya-construktor footer >div{width: 50%;}
+#goranskaya-construktor footer {font-size: 0;}
+#goranskaya-construktor footer .footer-cyber {text-align:left;padding: 0 0 0 2%;}
+#goranskaya-construktor footer .footer-cyber img{height: 25px;width: auto;}
+#goranskaya-construktor footer .footer-coder{text-align:right;padding: 0 2% 0 0;}
+#goranskaya-construktor footer .footer-coder a{text-decoration:none;color:white;font:.8rem arial; }
+#goranskaya-construktor footer .footer-coder a:hover{text-decoration:underline;}
+
 .all-params{
     width:300px;
     background: gray;
@@ -29,7 +57,7 @@ body{
 .annotation{color:gray;}
 .annotation span{color:white;}
 
-#painter{ position: relative;background: #eeeeee;}
+#painter{ position: relative;width: 100%;height: 100%;overflow:hidden; background: #377C8E;}
 
 #painter-zoom-id {
 	position: absolute;
