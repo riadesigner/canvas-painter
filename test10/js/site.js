@@ -570,7 +570,7 @@ var PainterBrush = {
 
 var PainterZoom = {
 	init:function(painter_id,init_scale){		
-		console.log("init zoom");
+		
 		this.$parent = $('#'+painter_id);
 		var init_scale = init_scale?init_scale:1;
 		this.SCALE = init_scale*100;	
@@ -598,9 +598,12 @@ var PainterZoom = {
 	},
 	build:function(){
 		this.$zoom = $([
-			'<div id="painter-zoom-id" class="noselect">',
-			'<div class="painter-zoom-in"><span>+</span></div>',
-			'<div class="painter-zoom-out"><span>-</span></div>',
+			'<div id="painter-zoom-id" class="noselect skin-green">',
+			'<div class="painter-zoom-in"></div>',
+			'<div class="painter-zoom-out"></div>',
+			'<div class="painter-zoom-pan"></div>',
+			'<div class="painter-zoom-divider"></div>',
+			'<div class="painter-zoom-preview"></div>',
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$zoom);
