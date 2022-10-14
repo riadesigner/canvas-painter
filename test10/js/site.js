@@ -185,7 +185,7 @@ var Painter = {
 		};	
 
 		this.$painter[0].onmousedown = function(event){	
-			if(!_this.ALL_READY || _this.ZOOM.is_hover()) return false;
+			if(!_this.ALL_READY || _this.ZOOM.is_hover() || _this.BRUSH.is_hover()) return false;
 			if(_this.SPACEBAR_PRESSED){
 				// PAN
 				_this.DRAW_MODE = false;
@@ -485,31 +485,27 @@ var Painter = {
 var PainterBrush = {
 	init:function(painter_id, arr_params) {
 		
+		this.$parent = $('#'+painter_id);
+
 		this.BRUSH_SIZE_MIN = arr_params[0];
 		this.BRUSH_SIZE_MAX = arr_params[1];
 		this.BRUSH_SIZE_STEP = arr_params[2];
 
 		this.BRUSH_SIZE_CURRENT = (this.BRUSH_SIZE_MAX-this.BRUSH_SIZE_MIN)/2+this.BRUSH_SIZE_MIN;		
 		this.DRAWING_MODE = true;
-
-		this.RANGE_BRUSH_SIZE =  'range-1-brush-size';
-		this.RANGE_BRUSH_SIZE_LABEL = 'range-1-brush-size-label';				
+		
 		this.set_status("режим рисования");
-
 		this.update_drawing_mode(true);
 
-		this.$range_size = $('#'+this.RANGE_BRUSH_SIZE);
-		this.$lable_size = $('#'+this.RANGE_BRUSH_SIZE_LABEL+' span');
-		
-		this.prepare();		
-		this.behavior();
+		this.build();		
+		this.set_current('brush');
 
 		return this;
 	},
 	//public
 	get_size:function() {
 		return this.BRUSH_SIZE_CURRENT;
-	},		
+	},
 	set_status:function(msg){		
 		this.STATUS = msg;	
 		$(this).trigger('status-updated');
@@ -518,16 +514,73 @@ var PainterBrush = {
 		return this.STATUS
 	},
 	//private	
+	build:function(){
+		this.$tools = $([
+			'<div id="painter-tools-id" class="noselect skin-green">',
+			'<div class="painter-tools-newdoc"></div>',
+			'<div class="painter-tools-fill"></div>',
+			'<div class="painter-tools-brush current"></div>',
+			'<div class="painter-tools-eraser"></div>',
+			'<div class="painter-tools-clearall"></div>',
+			'<div class="painter-tools-brushsizer"></div>',
+			'</div>'
+			].join(''));
+		this.$parent.append(this.$tools);
+		this.behavior();
+		// this.update_status();
+	},	
+	set_current:function(tool_name) {
+		var $t = this.$tools.find('.painter-tools-'+ tool_name);
+		if($t.length){
+			this.$tools.find('>div').removeClass('current');
+			$t.addClass('current');
+			this.CURRENT_TOOL = tool_name;	
+		}
+	},
 	behavior:function() {
 		var _this=this;
 		document.onkeyup = function(e) {			
-		  if (e.key == "1" || e.code == "Digit1") {
-			_this.update_drawing_mode(true); 	
-		  }
-		  if (e.key == "2" || e.code == "Digit2") {
-			_this.update_drawing_mode(false);	  	
-		  }		  
+		  if (e.key == "x" || e.code == "KeyX") {
+		  	if(_this.get_drawing_mode()){
+				_this.update_drawing_mode(false);
+				_this.set_current('eraser');
+		  	}else{
+				_this.update_drawing_mode(true);
+				_this.set_current('brush');		  		
+		  	}
+		  };
+		  if (e.key == "b" || e.code == "KeyB") {
+				_this.update_drawing_mode(true);
+				_this.set_current('brush');
+		  };		  
+		  if (e.key == "e" || e.code == "KeyE") {
+				_this.update_drawing_mode(false);
+				_this.set_current('eraser');
+		  }		  		  
 		};	
+		var all_tools = [
+			'.painter-tools-newdoc',
+			'.painter-tools-fill',
+			'.painter-tools-brush',
+			'.painter-tools-eraser',
+			'.painter-tools-clearall',
+			'.painter-tools-brushsizer'
+			].join(', '); 
+		this.$tools.find(all_tools).hover(function() {			
+		 _this.IS_HOVER = true;},function() { _this.IS_HOVER = false;});
+
+		this.$tools.find('.painter-tools-brush').on('touchend, click',function(){
+			_this.update_drawing_mode(true);
+			_this.set_current('brush');
+		});
+		this.$tools.find('.painter-tools-eraser').on('touchend, click',function(){
+			_this.update_drawing_mode(false);
+			_this.set_current('eraser');
+		});		
+
+	},
+	is_hover:function(){		
+		return this.IS_HOVER;
 	},
 	get_drawing_mode:function() {
 		return this.DRAWING_MODE;
@@ -538,34 +591,34 @@ var PainterBrush = {
 		var msg = mode ? "Режим рисования" : "Режим стирания";
 		this.set_status(msg);				
 	},
-	update_label_brush_size:function() {	
-		this.$lable_size.html(''+this.BRUSH_SIZE_CURRENT);
-	},
-	prepare:function() {
-		var _this=this;
+	// update_label_brush_size:function() {	
+	// 	this.$lable_size.html(''+this.BRUSH_SIZE_CURRENT);
+	// },
+	// prepare:function() {
+	// 	var _this=this;
 		
-		this.update_label_brush_size();
-		var sldr = {min:this.BRUSH_SIZE_MIN,max:this.BRUSH_SIZE_MAX,step:this.BRUSH_SIZE_STEP};		
+	// 	this.update_label_brush_size();
+	// 	var sldr = {min:this.BRUSH_SIZE_MIN,max:this.BRUSH_SIZE_MAX,step:this.BRUSH_SIZE_STEP};		
 
-		this.$range_size.slider({min:sldr['min'],max:sldr['max']});
-		this.$range_size.slider( "value", this.BRUSH_SIZE_CURRENT );
+	// 	this.$range_size.slider({min:sldr['min'],max:sldr['max']});
+	// 	this.$range_size.slider( "value", this.BRUSH_SIZE_CURRENT );
 
-		this.$range_size.slider({
-		    animate: "fast",
-		    min:sldr['min'],
-		    max:sldr['max'],
-		    step:sldr['step'],
-		    slide:function(e,ui) {		    	
-		    	_this.BRUSH_SIZE_CURRENT = ui.value;
-		    	_this.update_label_brush_size();
-		    },
-		    change:function(e,ui) {		    	
-		    	_this.BRUSH_SIZE_CURRENT = ui.value;
-		    	_this.update_label_brush_size();
-		    }			    
-		});
+	// 	this.$range_size.slider({
+	// 	    animate: "fast",
+	// 	    min:sldr['min'],
+	// 	    max:sldr['max'],
+	// 	    step:sldr['step'],
+	// 	    slide:function(e,ui) {		    	
+	// 	    	_this.BRUSH_SIZE_CURRENT = ui.value;
+	// 	    	_this.update_label_brush_size();
+	// 	    },
+	// 	    change:function(e,ui) {		    	
+	// 	    	_this.BRUSH_SIZE_CURRENT = ui.value;
+	// 	    	_this.update_label_brush_size();
+	// 	    }			    
+	// 	});
 		
-	}
+	// }
 };
 
 var PainterZoom = {
@@ -624,7 +677,7 @@ var PainterZoom = {
 			_this.IS_HOVER = true;
 		},function() {
 			_this.IS_HOVER = false;
-		})
+		});
 	},
 	zoom_in:function(){
 		this.SCALE +=this.STEP_SCALE;
