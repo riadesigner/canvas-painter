@@ -234,10 +234,6 @@ var Painter = {
 				_this.DRAW_MODE = false;			
 				document.body.style.cursor = 'grab';
 			};
-			// clear all
-			if (e.key == "c" || e.code == "KeyC" || e.keyCode == 67 ) {
-				_this.clear();	 
-			}		  
 		});		
 
 		document.addEventListener('keyup',function(e){			
@@ -262,6 +258,10 @@ var Painter = {
 			_this.SCALE_ASPECT = _this.ZOOM.get_scale()/100;	
 			_this.canvas_update_pos();			
 		});		
+		$(this.BRUSH).on('clearall',function(){		
+			if(!_this.ALL_READY) return false;
+			_this.clear();
+		});				
 
 	},
 	get_bounds:function(){
@@ -518,17 +518,23 @@ var PainterBrush = {
 		this.$tools = $([
 			'<div id="painter-tools-id" class="noselect skin-green">',
 			'<div class="painter-tools-newdoc"></div>',
-			'<div class="painter-tools-fill"></div>',
+			'<div class="painter-tools-fill disabled"></div>',
 			'<div class="painter-tools-brush current"></div>',
 			'<div class="painter-tools-eraser"></div>',
 			'<div class="painter-tools-clearall"></div>',
-			'<div class="painter-tools-brushsizer"></div>',
+			'<div class="painter-tools-brushsizer"><span><span></span></span></div>',
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$tools);
+
+		this.$b_sizer = this.$tools.find('.painter-tools-brushsizer');
+		this.B_SIZER_TOP = this.$b_sizer.offset().top;
 		this.behavior();
-		// this.update_status();
+		this.b_size_update();		
 	},	
+	b_size_update:function(){
+
+	},
 	set_current:function(tool_name) {
 		var $t = this.$tools.find('.painter-tools-'+ tool_name);
 		if($t.length){
@@ -539,7 +545,7 @@ var PainterBrush = {
 	},
 	behavior:function() {
 		var _this=this;
-		document.onkeyup = function(e) {			
+		document.onkeydown = function(e) {			
 		  if (e.key == "x" || e.code == "KeyX") {
 		  	if(_this.get_drawing_mode()){
 				_this.update_drawing_mode(false);
@@ -556,7 +562,11 @@ var PainterBrush = {
 		  if (e.key == "e" || e.code == "KeyE") {
 				_this.update_drawing_mode(false);
 				_this.set_current('eraser');
-		  }		  		  
+		  };
+			// clear all
+			if (e.key == "c" || e.code == "KeyC" || e.keyCode == 67 ) {
+				_this.say("clearall");	 
+			}
 		};	
 		var all_tools = [
 			'.painter-tools-newdoc',
@@ -576,8 +586,21 @@ var PainterBrush = {
 		this.$tools.find('.painter-tools-eraser').on('touchend, click',function(){
 			_this.update_drawing_mode(false);
 			_this.set_current('eraser');
-		});		
+		});	
+		this.$tools.find('.painter-tools-clearall').on('touchend, click',function(){			
+			_this.say("clearall");
+		});
+		this.$tools.find('.painter-tools-newdoc').on('touchend, click',function(){			
+			_this.say("newdoc");
+		});			
+		console.log('this.$b_sizer',this.$b_sizer[0])
+		this.$b_sizer[0].addEventListener('mousemove',function(e) {			
+			console.log(e.pageY-_this.B_SIZER_TOP);
+		});			
 
+	},
+	say:function(msg){		
+		$(this).trigger(msg);
 	},
 	is_hover:function(){		
 		return this.IS_HOVER;
