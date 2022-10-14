@@ -716,10 +716,12 @@ var PainterZoom = {
 
 var PainterCancelSystem = {
 	init:function(painter_id,max_cancel_steps) {
+		this.$parent = $('#'+painter_id);
 		this.ARR_SNAPSHOTS = [];
 		this.MAX_STEPS = max_cancel_steps;		
 		this.CURRENT = -1;
-		this.behavior();
+		this.build();	
+		this.behavior();	
 		this.update_status();
 		return this;
 	},
@@ -738,10 +740,17 @@ var PainterCancelSystem = {
 		};		
 		this.update_status();
 	},
+	build:function(){
+		this.$btns = $([
+			'<div id="painter-cancel-tool" class="noselect">',
+			'<div class="painter-cancel-back"><span></span></div>',
+			'<div class="painter-cancel-forward disabled"><span></span></div>',
+			'</div>'
+			].join(''));
+		this.$parent.append(this.$btns);		
+	},	
 	make_cancel:function() {
-		
-		// if(this.CURRENT<0) return false;
-
+	
 		if(this.ARR_SNAPSHOTS[this.CURRENT-1]){
 			this.CURRENT--;
 			var canvas = this.ARR_SNAPSHOTS[this.CURRENT];						
