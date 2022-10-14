@@ -166,5 +166,5 @@ align-items: center;
 
 
 
-#painter-status-bar {position: absolute;bottom: 0;left: 0;background: gray;width: 100%;padding: 0;display: flex;}
+#painter-status-bar {position: absolute;bottom: 0;left: 0;background: #4dc7c188;width: 100%;padding: 0;display: flex;}
 #painter-status-bar span{font:.8rem arial;color:white;padding:6px 10px;letter-spacing: 2px;}
