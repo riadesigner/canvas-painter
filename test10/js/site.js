@@ -721,12 +721,39 @@ var PainterZoom = {
 	}
 };
 
+
+// var ARR_THEMES = {
+// 		textures:[
+// 			{img:"img/img1.jpg",color:"#04a098"},
+// 			{img:"img/img1.jpg",color:"#418dcc"},
+// 			{img:"img/img1.jpg",color:"#0d4bac"},
+// 			{img:"img/img1.jpg",color:"#8E6386"}
+// 			],
+// 		lines:{
+// 			black:"#000000",
+// 			red:"#f20c28",
+// 			blue:"#0d4bac"
+// 			},
+// 		sets:[
+// 			{lines:"black",texture:0},
+// 			{lines:"black",texture:1},
+// 			{lines:"black",texture:2},
+// 			{lines:"black",texture:3},
+// 			{lines:"red",texture:3},
+// 			{lines:"blue",texture:3},
+// 			{lines:"blue",texture:0}
+// 			]		
+// 		};
+
 var PainterThemes = {
-	init:function(painter_id,index_theme){		
+	init:function(painter_id,themes){		
 		
 		this.$parent = $('#'+painter_id);		
-		this.CURRENT = index_theme?index_theme:0;
+		this.CURRENT = 0;
 		this.STATUS = "";
+
+
+		this.THEMES = themes; 
 
 		this.ARR_COLORS = ["#04a098","#418dcc","#0d4bac","#8E6386"];
 		this.THEME_COLORS = {
@@ -735,15 +762,7 @@ var PainterThemes = {
 			blue:"#0d4bac"
 		};
 
-		this.ARR_THEMES = [
-			{lines:'black',texture:0},
-			{lines:'black',texture:1},
-			{lines:'black',texture:2},
-			{lines:'black',texture:3},
-			{lines:'red',texture:3},			
-			{lines:'blue',texture:3},
-			{lines:'blue',texture:0}
-			];
+		this.SETS = this.THEMES.sets;
 		
 
 		this.build();
@@ -769,10 +788,10 @@ var PainterThemes = {
 	},
 	build:function(){
 		var themes = ""; 
-		for (var i=0; i<this.ARR_THEMES.length; i++){
+		for (var i=0; i<this.SETS.length; i++){
 			// ARR_COLORS
-			var color1 = this.THEME_COLORS[this.ARR_THEMES[i].lines];
-			var color2 = this.ARR_COLORS[this.ARR_THEMES[i].texture];
+			var color1 = this.THEME_COLORS[this.SETS[i].lines];
+			var color2 = this.ARR_COLORS[this.SETS[i].texture];
 			themes+=['<li>',
 					'<div><span style="background:'+color1+'"></span></div>',
 					'<div><span style="background:'+color2+'"></span></div>',
@@ -1102,7 +1121,7 @@ var ARR_MODELS = [
 			this.brush.init('painter',CFG.brush_params);
 			this.zoom.init('painter',CFG.init_scale);
 			this.cancelSystem.init('painter',CFG.max_cancel_steps);
-			this.themesSystem.init('painter',0);			
+			this.themesSystem.init('painter',ARR_THEMES);			
 			this.statusbar.init('painter',[
 				Painter,this.brush,this.zoom,this.cancelSystem,this.models,this.textures]);
 		}
