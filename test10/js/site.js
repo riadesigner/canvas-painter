@@ -38,7 +38,8 @@ var Painter = {
 		this.ZOOM = params.zoom;
 		this.models = params.models;
 		this.textures = params.textures;
-		this.CANCELSYSTEM = params.cancelSystem;			
+		this.CANCELSYSTEM = params.cancelSystem;	
+		this.themesSystem = params.themesSystem;				
 
 		var init_scale = this.PARAM.init_scale?this.PARAM.init_scale:1;		
 		this.SCALE_ASPECT = init_scale;
@@ -189,7 +190,8 @@ var Painter = {
 			if(!_this.ALL_READY || 
 				_this.ZOOM.is_hover() || 
 				_this.BRUSH.is_hover() ||
-				_this.CANCELSYSTEM.is_hover() ) return false;
+				_this.CANCELSYSTEM.is_hover() ||
+				_this.themesSystem.is_hover() ) return false;
 
 			if(_this.SPACEBAR_PRESSED){
 				// PAN
@@ -719,6 +721,64 @@ var PainterZoom = {
 	}
 };
 
+var PainterThemes = {
+	init:function(painter_id,index_theme){		
+		
+		this.$parent = $('#'+painter_id);
+		var index_theme = index_theme?index_theme:0;
+		this.build();
+		return this;
+	},
+	//public
+	get_status:function(){
+		return this.STATUS;
+	},	
+	//private
+	set_status:function(msg){
+		this.STATUS = msg;		
+		// $(this).trigger('status-updated');
+	},
+	is_hover:function() {
+		return this.IS_HOVER;
+	},
+	build:function(){
+		this.$themesTool = $([
+			'<div id="painter-themes-tool" class="noselect">',
+			'<div class="content">',
+				'<ul>',
+				'<li><div><span></span></div><div><span></span></div></li>',
+				'<li><div><span></span></div><div><span></span></div></li>',
+				'<li><div><span></span></div><div><span></span></div></li>',
+				'<li><div><span></span></div><div><span></span></div></li>',
+				'</ul>',
+			'</div>',
+			'</div>'
+			].join(''));
+		this.$parent.append(this.$themesTool);
+		this.behavior();
+		// this.update_status();
+	},		
+	behavior:function(){
+		var _this=this;
+
+		this.$themesTool.hover((e)=>{this.IS_HOVER=true;},(e)=>{this.IS_HOVER=false;});
+		
+		// $('#painter-zoom-id .painter-zoom-in').on("touchend, click",function(){			
+		// 	_this.zoom_in();
+		// 	return false;
+		// });
+		// $('#painter-zoom-id .painter-zoom-out').on("touchend, click",function(){			
+		// 	_this.zoom_out();
+		// 	return false;
+		// });		
+		// $('#painter-zoom-id').hover(function() {
+		// 	_this.IS_HOVER = true;
+		// },function() {
+		// 	_this.IS_HOVER = false;
+		// });
+	}
+};
+
 var PainterCancelSystem = {
 	init:function(painter_id,max_cancel_steps) {
 		this.$parent = $('#'+painter_id);
@@ -966,6 +1026,7 @@ $(function(){
 		textures:PainterTexture,
 		zoom:PainterZoom,
 		cancelSystem:PainterCancelSystem,
+		themesSystem:PainterThemes,
 		statusbar:PainterStatusbar,
 		init_scale:CFG.init_scale,		
 		onready:function(){
@@ -974,6 +1035,7 @@ $(function(){
 			this.brush.init('painter',CFG.brush_params);
 			this.zoom.init('painter',CFG.init_scale);
 			this.cancelSystem.init('painter',CFG.max_cancel_steps);
+			this.themesSystem.init('painter',0);			
 			this.statusbar.init('painter',[
 				Painter,this.brush,this.zoom,this.cancelSystem,this.models,this.textures]);
 		}

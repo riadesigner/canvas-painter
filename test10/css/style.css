@@ -162,7 +162,7 @@ align-items: center;
 .painter-tools-brush{left:61px;top:122px;}
 .painter-tools-brushsizer{left:0;top:187px;}
 
-#painter-cancel-tool{position: absolute;top:10px;left:150px;height: 36px;width: 120px;border-radius: 6px; }
+#painter-cancel-tool{position: absolute;top:15px;left:280px;height: 36px;width: 120px;border-radius: 6px; }
 .painter-cancel-back,
 .painter-cancel-forward{width: 58px;height: 36px;border-radius: 6px;position: absolute;top:0;background: #262626;}
 .painter-cancel-back{left:0;}
@@ -176,3 +176,22 @@ align-items: center;
 
 #painter-status-bar {position: absolute;bottom: 0;left: 0;background: #4dc7c188;width: 100%;padding: 0;display: flex;}
 #painter-status-bar span{font:.8rem arial;color:white;padding:6px 10px;letter-spacing: 2px;}
+
+#painter-themes-tool{position: absolute;top:10px;left:180px;width: 76px;background: #262626;border-radius: 10px;padding:10px;}
+#painter-themes-tool .content ul{list-style:none;margin: 0;padding: 0;}
+#painter-themes-tool .content ul li{border:1px solid transparent;display: flex;cursor: pointer;border-radius: 6px;transition: .3s;}
+#painter-themes-tool .content ul li:hover{border:1px solid white;}
+#painter-themes-tool .content ul li:not(:last-child){margin: 0 0 20px 0;}
+#painter-themes-tool .content ul li div{width:50%;text-align: center;padding: 6px 0;}
+#painter-themes-tool .content ul li div span{width: 19px;height: 19px;background: #04A1AB;border-radius:50%;display: block;margin: 0 auto;}
+
+
+
+
+
+
+
+
+
+
+
