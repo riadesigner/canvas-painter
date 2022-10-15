@@ -721,30 +721,6 @@ var PainterZoom = {
 	}
 };
 
-
-// var ARR_THEMES = {
-// 		textures:[
-// 			{img:"img/img1.jpg",color:"#04a098"},
-// 			{img:"img/img1.jpg",color:"#418dcc"},
-// 			{img:"img/img1.jpg",color:"#0d4bac"},
-// 			{img:"img/img1.jpg",color:"#8E6386"}
-// 			],
-// 		lines:{
-// 			black:"#000000",
-// 			red:"#f20c28",
-// 			blue:"#0d4bac"
-// 			},
-// 		sets:[
-// 			{lines:"black",texture:0},
-// 			{lines:"black",texture:1},
-// 			{lines:"black",texture:2},
-// 			{lines:"black",texture:3},
-// 			{lines:"red",texture:3},
-// 			{lines:"blue",texture:3},
-// 			{lines:"blue",texture:0}
-// 			]		
-// 		};
-
 var PainterThemes = {
 	init:function(painter_id,themes){		
 		
@@ -752,18 +728,10 @@ var PainterThemes = {
 		this.CURRENT = 0;
 		this.STATUS = "";
 
-
-		this.THEMES = themes; 
-
-		this.ARR_COLORS = ["#04a098","#418dcc","#0d4bac","#8E6386"];
-		this.THEME_COLORS = {
-			black:"#000000",
-			red:"#f20c28",
-			blue:"#0d4bac"
-		};
-
+		this.THEMES = themes; 		
+		this.TEXTURES = this.THEMES.textures;
 		this.SETS = this.THEMES.sets;
-		
+		this.LINES = this.THEMES.lines;		
 
 		this.build();
 		return this;
@@ -788,15 +756,14 @@ var PainterThemes = {
 	},
 	build:function(){
 		var themes = ""; 
-		for (var i=0; i<this.SETS.length; i++){
-			// ARR_COLORS
-			var color1 = this.THEME_COLORS[this.SETS[i].lines];
-			var color2 = this.ARR_COLORS[this.SETS[i].texture];
+		for (var i=0; i<this.SETS.length; i++){			
+			var color1 = this.LINES[this.SETS[i].lines];
+			var color2 = this.TEXTURES[this.SETS[i].texture.color];
 			themes+=['<li>',
 					'<div><span style="background:'+color1+'"></span></div>',
 					'<div><span style="background:'+color2+'"></span></div>',
 				'</li>'].join('');
-		};
+			};
 
 		this.$themesTool = $([
 			'<div id="painter-themes-tool" class="noselect">',
@@ -817,20 +784,6 @@ var PainterThemes = {
 				_this.set_current(index);				
 			});
 		});
-		
-		// $('#painter-zoom-id .painter-zoom-in').on("touchend, click",function(){			
-		// 	_this.zoom_in();
-		// 	return false;
-		// });
-		// $('#painter-zoom-id .painter-zoom-out').on("touchend, click",function(){			
-		// 	_this.zoom_out();
-		// 	return false;
-		// });		
-		// $('#painter-zoom-id').hover(function() {
-		// 	_this.IS_HOVER = true;
-		// },function() {
-		// 	_this.IS_HOVER = false;
-		// });
 	}
 };
 
