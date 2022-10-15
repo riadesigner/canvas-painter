@@ -37,7 +37,7 @@ var Painter = {
 		this.BRUSH = params.brush;
 		this.ZOOM = params.zoom;
 		this.models = params.models;
-		this.textures = params.textures;
+		// this.textures = params.textures;
 		this.CANCELSYSTEM = params.cancelSystem;	
 		this.themesSystem = params.themesSystem;				
 
@@ -59,13 +59,13 @@ var Painter = {
 	get_status:function(){
 		return this.STATUS;
 	},	
-	show_background:function(){
-		var img = this.TEXTURES_LOADED[0]; 
-		this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);		
-	},
-	textures_loaded_all:function(){
-		return this.TEXTURES.length==this.TEXTURES_LOADED.length;
-	},
+	// show_background:function(){
+	// 	var img = this.TEXTURES_LOADED[0]; 
+	// 	this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);		
+	// },
+	// textures_loaded_all:function(){
+	// 	return this.TEXTURES.length==this.TEXTURES_LOADED.length;
+	// },
 	pre_build:function() {
 
 		this.CANVAS_WIDTH = this.PARAM.c_w * this.PIXEL_ASPECT;
@@ -116,7 +116,7 @@ var Painter = {
 	update_texture_layer:function(){
 		var w = this.$canvas[0].width;
 		var h = this.$canvas[0].height;		
-		var img = this.textures.get_image();
+		var img = this.themesSystem.get_image(); //xxx
 		this.brush_texture_ctx.drawImage(img,0,0,img.width,img.height,0,0,w,h);
 	},
 	update_model_layer:function(){
@@ -143,7 +143,7 @@ var Painter = {
 	},	
 
 	is_all_ready:function() {
-		if(this.textures.is_ready() && this.models.is_ready()){
+		if(this.themesSystem.is_ready() && this.models.is_ready()){
 			this.ALL_READY = true;
 			this.update_texture_layer();
 			this.update_model_layer();
@@ -155,8 +155,8 @@ var Painter = {
 	behavior:function() {
 		var _this=this;		
 
-		$(this.textures).on('all-loaded',function() {
-			_this.is_all_ready();
+		$(this.themesSystem).on('all-loaded',function() {			
+			_this.is_all_ready();			
 		});
 		$(this.models).on('all-loaded',function() {
 			_this.is_all_ready();
@@ -727,23 +727,55 @@ var PainterThemes = {
 		this.$parent = $('#'+painter_id);		
 		this.CURRENT = 0;
 		this.STATUS = "";
+		this.IS_READY = false;
 
 		this.THEMES = themes; 		
 		this.TEXTURES = this.THEMES.textures;
 		this.SETS = this.THEMES.sets;
 		this.LINES = this.THEMES.lines;		
 
-		this.build();
+		this.ARR_TEXTURES_LOADED = [];
+		this.build();		
+		this.load_textures();
 		return this;
 	},
 	//public
 	get_status:function(){
 		return this.STATUS;
+	},
+	is_ready:function() {
+		return this.IS_READY;
+	},
+	get_image:function() {
+		return this.ARR_TEXTURES_LOADED[this.CURRENT];
 	},	
 	//private
+	load_textures:function() {
+		var _this=this;		
+		if(!this.ARR_TEXTURES_LOADED.length){
+			this.NEED_TO_LOAD = [];
+			for (var i in this.TEXTURES){
+				this.NEED_TO_LOAD.push(this.TEXTURES[i].img);
+			}
+		};
+		var src = this.NEED_TO_LOAD.shift();
+		if(src){						
+			this.set_status("Загрузка текстуры..." );			
+			var img = new Image();
+			img.onload = function(){
+				_this.ARR_TEXTURES_LOADED.push(img);
+				_this.load_textures();			
+			}
+			img.src = src;			
+		}else{						
+			this.IS_READY = true;			
+			this.set_status("Загружено текстур: " + this.ARR_TEXTURES_LOADED.length );
+			$(this).trigger('all-loaded');			
+		}
+	},	
+
 	set_status:function(msg){
 		this.STATUS = msg;		
-		$(this).trigger('onchanged',this.CURRENT);
 	},
 	is_hover:function() {
 		return this.IS_HOVER;
@@ -753,12 +785,13 @@ var PainterThemes = {
 		var msg = 'Установлена тема:'+ index;
 		console.log(msg);
 		this.set_status(msg);
+		$(this).trigger('onchanged',this.CURRENT);
 	},
 	build:function(){
 		var themes = ""; 
 		for (var i=0; i<this.SETS.length; i++){			
 			var color1 = this.LINES[this.SETS[i].lines];
-			var color2 = this.TEXTURES[this.SETS[i].texture.color];
+			var color2 = this.TEXTURES[this.SETS[i].texture].color;			
 			themes+=['<li>',
 					'<div><span style="background:'+color1+'"></span></div>',
 					'<div><span style="background:'+color2+'"></span></div>',
@@ -774,7 +807,7 @@ var PainterThemes = {
 			].join(''));
 		this.$parent.append(this.$themesTool);
 		this.behavior();		
-	},		
+	},
 	behavior:function(){
 		var _this=this;
 
@@ -963,58 +996,6 @@ var PainterModel = {
 
 };
 
-var PainterTexture = {
-	init:function(painter_id,textures) {
-		this.$parent = $('#'+painter_id);
-		this.ARR = textures.textures || [];
-		this.ARR_LOADED = [];
-		this.ALL_READY = false;
-		this.set_status("Загружаются текстуры...");
-		this.set_current(0);		
-		this.preload(0);
-		// this.behavior();
-		return this;
-	},
-	is_ready:function() {
-		return this.ALL_READY;
-	},
-	behavior:function() {
-		
-	},
-	get_image:function() {
-		return this.ARR_LOADED[this.CURRENT];
-	},
-	set_all_loaded:function() {
-		this.ALL_READY = true;
-		$(this).trigger('all-loaded');
-	},
-	get_status:function() {
-		return this.STATUS;
-	},
-	set_status:function(msg) {
-		this.STATUS = msg;
-		$(this).trigger('status-updated');
-	},	
-	preload:function() {
-		var _this=this;								
-		this.set_status("Загружено текстур: "+ _this.ARR_LOADED.length);						
-		var src = this.ARR.shift();
-		if(src){
-			var img = new Image();
-			img.onload = function() {
-				_this.ARR_LOADED.push(this);
-				_this.preload();
-			};
-			img.src = src.img;
-		}else{
-			_this.set_all_loaded();	
-		}
-	},
-	set_current:function(index) {
-		this.CURRENT = index;
-	}
-
-};
 
 $(function(){	
 
@@ -1054,7 +1035,8 @@ var ARR_MODELS = [
 		init_scale:1,
 		brush_params:[5,60,5],
 		max_cancel_steps:5,
-		textures:ARR_THEMES,
+		// textures:ARR_THEMES,
+		themes:ARR_THEMES,
 		models:ARR_MODELS		
 	};
 
@@ -1062,7 +1044,6 @@ var ARR_MODELS = [
 	Painter.init('painter',CFG.size,{		
 		brush:PainterBrush,
 		models:PainterModel,
-		textures:PainterTexture,
 		zoom:PainterZoom,
 		cancelSystem:PainterCancelSystem,
 		themesSystem:PainterThemes,
@@ -1070,13 +1051,12 @@ var ARR_MODELS = [
 		init_scale:CFG.init_scale,		
 		onready:function(){
 			this.models.init('painter',CFG.models);
-			this.textures.init('painter',CFG.textures);
 			this.brush.init('painter',CFG.brush_params);
 			this.zoom.init('painter',CFG.init_scale);
 			this.cancelSystem.init('painter',CFG.max_cancel_steps);
-			this.themesSystem.init('painter',ARR_THEMES);			
+			this.themesSystem.init('painter',CFG.themes);			
 			this.statusbar.init('painter',[
-				Painter,this.brush,this.zoom,this.cancelSystem,this.models,this.textures]);
+				Painter,this.brush,this.zoom,this.cancelSystem,this.models,this.themesSystem]);
 		}
 	});
 
