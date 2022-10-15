@@ -764,31 +764,27 @@ var PainterCancelSystem = {
 			$(this).trigger('make-cancel',canvas);			
 		}
 	},
-	// make_restore:function() {
-	// 	if(this.CURRENT>-1 && this.ARR_SNAPSHOTS[this.CURRENT+1]){
-	// 		this.CURRENT++;
-	// 		var canvas = this.ARR_SNAPSHOTS[this.CURRENT];			
-	// 		$(this).trigger('make-cancel',canvas);
-	// 		this.update_status();
-	// 	}
-	// },
+	make_restore:function() {
+		if(this.CURRENT>-1 && this.ARR_SNAPSHOTS[this.CURRENT+1]){
+			this.CURRENT++;
+			var canvas = this.ARR_SNAPSHOTS[this.CURRENT];			
+			$(this).trigger('make-cancel',canvas);
+			this.update_status();
+		}
+	},
 	behavior:function() {
 		var _this=this;
 		
-		document.addEventListener('keydown',function(e){			
+		document.addEventListener('keydown',(e)=>{			
 		  if(e.key === 'z' && (e.ctrlKey || e.metaKey) ){ 		  	
-		  	_this.make_cancel();		  	
+		  	_this.make_cancel();
 		  }
 		});
 
-		this.$btnBack.hover((e)=>{this.IS_HOVER = true;},(e)=>{this.IS_HOVER = false;});
-		this.$btnForw.hover((e)=>{this.IS_HOVER = true;},(e)=>{this.IS_HOVER = false;});
-
-		this.$btnBack.on('touchend, click',function() {
-			_this.make_cancel();
-		});
-
-		// this.$btnForw 
+		this.$btns.hover((e)=>{this.IS_HOVER = true;},(e)=>{this.IS_HOVER = false;});
+		this.$btnBack.on('touchend, click',(e)=> {this.make_cancel();});
+		this.$btnForw.on('touchend, click',(e)=> {this.make_restore();});
+		
 	},
 	is_hover:function() {
 		return this.IS_HOVER;
@@ -798,10 +794,10 @@ var PainterCancelSystem = {
 	},
 	update_status:function() {		
 		var remainder =  this.CURRENT;
-		console.log('this.CURRENT!',this.CURRENT)
-
+		var restore = (this.ARR_SNAPSHOTS.length - 1 - this.CURRENT);
+		
 		remainder>0 ? this.$btnBack.removeClass('disabled'):this.$btnBack.addClass('disabled');
-		// this.$btnForw. = ;
+		restore >0 ? this.$btnForw.removeClass('disabled'):this.$btnForw.addClass('disabled');		
 
 		this.STATUS = "доступно<br> отмен: "+remainder;
 		$(this).trigger('status-updated');		
