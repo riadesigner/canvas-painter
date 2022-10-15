@@ -179,8 +179,8 @@ align-items: center;
 
 #painter-themes-tool{position: absolute;top:10px;left:180px;width: 76px;background: #262626;border-radius: 10px;padding:10px;}
 #painter-themes-tool .content ul{list-style:none;margin: 0;padding: 0;}
-#painter-themes-tool .content ul li{border:1px solid transparent;display: flex;cursor: pointer;border-radius: 6px;transition: .3s;}
-#painter-themes-tool .content ul li:hover{border:1px solid white;}
+#painter-themes-tool .content ul li{border:2px solid transparent;background: #404040; display: flex;cursor: pointer;border-radius: 6px;transition: .3s;}
+#painter-themes-tool .content ul li:hover{border:2px solid white;}
 #painter-themes-tool .content ul li:not(:last-child){margin: 0 0 20px 0;}
 #painter-themes-tool .content ul li div{width:50%;text-align: center;padding: 6px 0;}
 #painter-themes-tool .content ul li div span{width: 19px;height: 19px;background: #04A1AB;border-radius:50%;display: block;margin: 0 auto;}

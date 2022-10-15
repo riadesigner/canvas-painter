@@ -724,8 +724,28 @@ var PainterZoom = {
 var PainterThemes = {
 	init:function(painter_id,index_theme){		
 		
-		this.$parent = $('#'+painter_id);
-		var index_theme = index_theme?index_theme:0;
+		this.$parent = $('#'+painter_id);		
+		this.CURRENT = index_theme?index_theme:0;
+		this.STATUS = "";
+
+		this.ARR_COLORS = ["#04a098","#418dcc","#0d4bac","#8E6386"];
+		this.THEME_COLORS = {
+			black:"#000000",
+			red:"#f20c28",
+			blue:"#0d4bac"
+		};
+
+		this.ARR_THEMES = [
+			{lines:'black',texture:0},
+			{lines:'black',texture:1},
+			{lines:'black',texture:2},
+			{lines:'black',texture:3},
+			{lines:'red',texture:3},			
+			{lines:'blue',texture:3},
+			{lines:'blue',texture:0}
+			];
+		
+
 		this.build();
 		return this;
 	},
@@ -736,32 +756,48 @@ var PainterThemes = {
 	//private
 	set_status:function(msg){
 		this.STATUS = msg;		
-		// $(this).trigger('status-updated');
+		$(this).trigger('onchanged',this.CURRENT);
 	},
 	is_hover:function() {
 		return this.IS_HOVER;
 	},
+	set_current:function(index) {
+		this.CURRENT = index;
+		var msg = 'Установлена тема:'+ index;
+		console.log(msg);
+		this.set_status(msg);
+	},
 	build:function(){
+		var themes = ""; 
+		for (var i=0; i<this.ARR_THEMES.length; i++){
+			// ARR_COLORS
+			var color1 = this.THEME_COLORS[this.ARR_THEMES[i].lines];
+			var color2 = this.ARR_COLORS[this.ARR_THEMES[i].texture];
+			themes+=['<li>',
+					'<div><span style="background:'+color1+'"></span></div>',
+					'<div><span style="background:'+color2+'"></span></div>',
+				'</li>'].join('');
+		};
+
 		this.$themesTool = $([
 			'<div id="painter-themes-tool" class="noselect">',
 			'<div class="content">',
-				'<ul>',
-				'<li><div><span></span></div><div><span></span></div></li>',
-				'<li><div><span></span></div><div><span></span></div></li>',
-				'<li><div><span></span></div><div><span></span></div></li>',
-				'<li><div><span></span></div><div><span></span></div></li>',
-				'</ul>',
+				'<ul>' +themes + '</ul>',
 			'</div>',
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$themesTool);
-		this.behavior();
-		// this.update_status();
+		this.behavior();		
 	},		
 	behavior:function(){
 		var _this=this;
 
 		this.$themesTool.hover((e)=>{this.IS_HOVER=true;},(e)=>{this.IS_HOVER=false;});
+		this.$themesTool.find('li').each(function(index){
+			$(this).on("touchend, click",(e)=>{
+				_this.set_current(index);				
+			});
+		});
 		
 		// $('#painter-zoom-id .painter-zoom-in').on("touchend, click",function(){			
 		// 	_this.zoom_in();
