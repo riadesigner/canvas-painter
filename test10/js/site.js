@@ -59,13 +59,7 @@ var Painter = {
 	get_status:function(){
 		return this.STATUS;
 	},	
-	// show_background:function(){
-	// 	var img = this.TEXTURES_LOADED[0]; 
-	// 	this.ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, this.$canvas[0].width, this.$canvas[0].height);		
-	// },
-	// textures_loaded_all:function(){
-	// 	return this.TEXTURES.length==this.TEXTURES_LOADED.length;
-	// },
+
 	pre_build:function() {
 
 		this.CANVAS_WIDTH = this.PARAM.c_w * this.PIXEL_ASPECT;
@@ -792,6 +786,7 @@ var PainterThemes = {
 		var msg = 'Установлена тема:'+ index;		
 		$.each(this.NAMES,function(i) { _this.$parent.removeClass(_this.NAMES[i]); });
 		this.$parent.addClass(this.NAMES[index]);
+		this.$parent.find('li').removeClass('current').eq(index).addClass('current');
 		this.set_status(msg);
 		$(this).trigger('onchanged',this.CURRENT);
 	},

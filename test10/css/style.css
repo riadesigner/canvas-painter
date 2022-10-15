@@ -189,7 +189,7 @@ align-items: center;
 #painter-themes-tool .content ul li:not(:last-child){margin: 0 0 20px 0;}
 #painter-themes-tool .content ul li div{width:50%;text-align: center;padding: 6px 0;}
 #painter-themes-tool .content ul li div span{width: 19px;height: 19px;background: #04A1AB;border-radius:50%;display: block;margin: 0 auto;}
-
+#painter-themes-tool .content ul li.current{border:2px solid rgba(255,255,255,.5);}
 
 
 
