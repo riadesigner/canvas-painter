@@ -520,7 +520,7 @@ var PainterBrush = {
 	//private	
 	build:function(){
 		this.$tools = $([
-			'<div id="painter-tools-id" class="noselect skin-green">',
+			'<div id="painter-tools-id" class="noselect">',
 			'<div class="painter-tools-newdoc"></div>',
 			'<div class="painter-tools-fill disabled"></div>',
 			'<div class="painter-tools-brush current"></div>',
@@ -678,7 +678,7 @@ var PainterZoom = {
 	},
 	build:function(){
 		this.$zoom = $([
-			'<div id="painter-zoom-id" class="noselect skin-green">',
+			'<div id="painter-zoom-id" class="noselect">',
 			'<div class="painter-zoom-in"></div>',
 			'<div class="painter-zoom-out"></div>',
 			'<div class="painter-zoom-pan"></div>',
@@ -721,8 +721,7 @@ var PainterZoom = {
 var PainterThemes = {
 	init:function(painter_id,themes){		
 		
-		this.$parent = $('#'+painter_id);		
-		this.CURRENT = 0;
+		this.$parent = $('#'+painter_id);				
 		this.STATUS = "";
 		this.IS_READY = false;
 
@@ -730,10 +729,13 @@ var PainterThemes = {
 		this.TEXTURES = this.THEMES.textures;
 		this.SETS = this.THEMES.sets;
 		this.LINES = this.THEMES.lines;		
+		this.NAMES = this.get_all_names();		
 
 		this.ARR_TEXTURES_LOADED = [];
 		this.build();		
 		this.load_textures();
+		this.set_current(0);
+		
 		return this;
 	},
 	//public
@@ -747,6 +749,13 @@ var PainterThemes = {
 		return this.ARR_TEXTURES_LOADED[this.CURRENT];
 	},	
 	//private
+	get_all_names:function() {
+		var arr_nm = []; 
+		for (var i in this.THEMES.sets){
+			arr_nm.push(this.THEMES.sets[i].name);
+		};
+		return arr_nm;		
+	},	
 	load_textures:function() {
 		var _this=this;		
 		if(!this.ARR_TEXTURES_LOADED.length){
@@ -778,9 +787,11 @@ var PainterThemes = {
 		return this.IS_HOVER;
 	},
 	set_current:function(index) {
+		var _this=this;
 		this.CURRENT = index;
-		var msg = 'Установлена тема:'+ index;
-		console.log(msg);
+		var msg = 'Установлена тема:'+ index;		
+		$.each(this.NAMES,function(i) { _this.$parent.removeClass(_this.NAMES[i]); });
+		this.$parent.addClass(this.NAMES[index]);
 		this.set_status(msg);
 		$(this).trigger('onchanged',this.CURRENT);
 	},
@@ -1011,13 +1022,13 @@ var ARR_THEMES = {
 			blue:"#0d4bac"
 			},
 		sets:[
-			{lines:"black",texture:0},
-			{lines:"black",texture:1},
-			{lines:"black",texture:2},
-			{lines:"black",texture:3},
-			{lines:"red",texture:3},
-			{lines:"blue",texture:3},
-			{lines:"blue",texture:0}
+			{lines:"black", texture:0, name:'theme-green'},
+			{lines:"black", texture:1, name:'theme-sky'},
+			{lines:"black", texture:2, name:'theme-blue'},
+			{lines:"black", texture:3, name:'theme-purple'},
+			{lines:"red", texture:3, name:'theme-purple'},
+			{lines:"blue", texture:3, name:'theme-purple'},
+			{lines:"blue", texture:0, name:'theme-green'}
 			]		
 		};
 
