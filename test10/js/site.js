@@ -185,7 +185,12 @@ var Painter = {
 		};	
 
 		this.$painter[0].onmousedown = function(event){	
-			if(!_this.ALL_READY || _this.ZOOM.is_hover() || _this.BRUSH.is_hover()) return false;
+			
+			if(!_this.ALL_READY || 
+				_this.ZOOM.is_hover() || 
+				_this.BRUSH.is_hover() ||
+				_this.CANCELSYSTEM.is_hover() ) return false;
+
 			if(_this.SPACEBAR_PRESSED){
 				// PAN
 				_this.DRAW_MODE = false;
@@ -250,7 +255,7 @@ var Painter = {
 			_this.user_ctx.clearRect(0, 0, _this.user_ctx.canvas.width, _this.user_ctx.canvas.height)
 			_this.user_ctx.drawImage(canvas,0,0);
 			_this.compose();
-			console.log("make cancel!")
+			console.log("make cancel!!!!")
 		});
 
 		$(this.ZOOM).on('scale-updated',function(){		
@@ -743,21 +748,20 @@ var PainterCancelSystem = {
 	build:function(){
 		this.$btns = $([
 			'<div id="painter-cancel-tool" class="noselect">',
-			'<div class="painter-cancel-back"><span></span></div>',
+			'<div class="painter-cancel-back disabled"><span></span></div>',
 			'<div class="painter-cancel-forward disabled"><span></span></div>',
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$btns);		
+		this.$btnBack = this.$btns.find('.painter-cancel-back');
+		this.$btnForw = this.$btns.find('.painter-cancel-forward');
 	},	
 	make_cancel:function() {
-	
-		if(this.ARR_SNAPSHOTS[this.CURRENT-1]){
+		if(this.ARR_SNAPSHOTS[this.CURRENT-1]){			
 			this.CURRENT--;
-			var canvas = this.ARR_SNAPSHOTS[this.CURRENT];						
-			console.log('this.ARR_SNAPSHOTS3',this.ARR_SNAPSHOTS.length)
-			console.log('this.CURRENT',this.CURRENT)
-			$(this).trigger('make-cancel',canvas);					
+			var canvas = this.ARR_SNAPSHOTS[this.CURRENT];		
 			this.update_status();
+			$(this).trigger('make-cancel',canvas);			
 		}
 	},
 	// make_restore:function() {
@@ -770,18 +774,35 @@ var PainterCancelSystem = {
 	// },
 	behavior:function() {
 		var _this=this;
-		document.addEventListener('keydown',function(e){		  			
-			// console.log('e',e);
+		
+		document.addEventListener('keydown',function(e){			
 		  if(e.key === 'z' && (e.ctrlKey || e.metaKey) ){ 		  	
 		  	_this.make_cancel();		  	
 		  }
-		});			
+		});
+
+		this.$btnBack.hover((e)=>{this.IS_HOVER = true;},(e)=>{this.IS_HOVER = false;});
+		this.$btnForw.hover((e)=>{this.IS_HOVER = true;},(e)=>{this.IS_HOVER = false;});
+
+		this.$btnBack.on('touchend, click',function() {
+			_this.make_cancel();
+		});
+
+		// this.$btnForw 
+	},
+	is_hover:function() {
+		return this.IS_HOVER;
 	},
 	get_status:function() {
 		return this.STATUS;
 	},
 	update_status:function() {		
 		var remainder =  this.CURRENT;
+		console.log('this.CURRENT!',this.CURRENT)
+
+		remainder>0 ? this.$btnBack.removeClass('disabled'):this.$btnBack.addClass('disabled');
+		// this.$btnForw. = ;
+
 		this.STATUS = "доступно<br> отмен: "+remainder;
 		$(this).trigger('status-updated');		
 	}
