@@ -980,7 +980,7 @@ var PainterModel = {
 				_this.ARR_LOADED.push(this);
 				_this.preload();
 			};
-			img.src = src;
+			img.src = src.img;
 		}else{
 			_this.set_all_loaded();	
 		}
@@ -992,9 +992,9 @@ var PainterModel = {
 };
 
 var PainterTexture = {
-	init:function(painter_id,arr_textures) {
+	init:function(painter_id,textures) {
 		this.$parent = $('#'+painter_id);
-		this.ARR = arr_textures || [];
+		this.ARR = textures.textures || [];
 		this.ARR_LOADED = [];
 		this.ALL_READY = false;
 		this.set_status("Загружаются текстуры...");
@@ -1033,7 +1033,7 @@ var PainterTexture = {
 				_this.ARR_LOADED.push(this);
 				_this.preload();
 			};
-			img.src = src;
+			img.src = src.img;
 		}else{
 			_this.set_all_loaded();	
 		}
@@ -1046,13 +1046,44 @@ var PainterTexture = {
 
 $(function(){	
 
+
+
+var ARR_THEMES = {
+		textures:[
+			{img:"img/img1.jpg",color:"#04a098"},
+			{img:"img/img1.jpg",color:"#418dcc"},
+			{img:"img/img1.jpg",color:"#0d4bac"},
+			{img:"img/img1.jpg",color:"#8E6386"}
+			],
+		lines:{
+			black:"#000000",
+			red:"#f20c28",
+			blue:"#0d4bac"
+			},
+		sets:[
+			{lines:"black",texture:0},
+			{lines:"black",texture:1},
+			{lines:"black",texture:2},
+			{lines:"black",texture:3},
+			{lines:"red",texture:3},
+			{lines:"blue",texture:3},
+			{lines:"blue",texture:0}
+			]		
+		};
+
+var ARR_MODELS = [
+		{img:"img/model-1.png",title:"тельняшка с рукавами"},
+		{img:"img/model-1.png",title:"тельняшка без рукавов"},
+		{img:"img/model-1.png",title:"тельняшка-платье с рукавами"}
+		];
+
 	var CFG = {
 		size:{ painter:[1000,500], canvas:[1000,800]},
 		init_scale:1,
 		brush_params:[5,60,5],
 		max_cancel_steps:5,
-		textures:["img/img1.jpg"],
-		models:["img/model-1.png"]		
+		textures:ARR_THEMES,
+		models:ARR_MODELS		
 	};
 
 
