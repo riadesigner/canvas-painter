@@ -8,10 +8,10 @@ var Painter = {
 		var params = params || {};
 		
 		this.PARAM = $.extend({
-				w:size.painter[0],
-				h:size.painter[1],
-				c_w:size.canvas[0],
-				c_h:size.canvas[1]				
+				w:1000,
+				h:500,
+				c_w:size.width,
+				c_h:size.height				
 			},params);
 
 		// update for real bounds
@@ -272,16 +272,14 @@ var Painter = {
 
 	},
 	get_bounds:function(){
-		var w = this.PARAM.c_w;
-		var h = this.PARAM.c_h;	
+		var c_w = this.PARAM.c_w;
+		var c_h = this.PARAM.c_h;	
+		var w = this.PARAM.w;
+		var h = this.PARAM.h;			
 		var s = this.SCALE_ASPECT;		
-		var w_coord = this.world_coord;
-		if(s==1){
-			return {w:w,h:h,left:w_coord[0],top:w_coord[1]};
-		}else{					
-			return {w:w*s, h:h*s, left:w_coord[0]+(w-w*s)*.5, top:w_coord[1]+(h-h*s)*.2};
-			// return {w:w*s, h:h*s, left:0, top:0};
-		}		
+		var w_coord = this.world_coord;		
+		var bounds = {w:c_w*s, c_h:h*s, left:w_coord[0]+(w-c_w*s)*.5, top:w_coord[1]+(h-c_h*s)*.4};		
+		return bounds;
 	},
 	compose:function(){		
 		this.ctx.drawImage(this.bg_canvas,0,0); 		
@@ -295,8 +293,7 @@ var Painter = {
 
 	recalc_size:function() {		
 		var $p = this.$painter;
-		this.p_offset = {top:$p.offset().top,left:$p.offset().left};			
-		// this.pixel_size = $p.width()/this.$canvas[0].width;	
+		this.p_offset = {top:$p.offset().top,left:$p.offset().left};
 		this.pixel_size = 1;
 	},
 	ending_draw:function() {
@@ -1031,11 +1028,10 @@ var ARR_MODELS = [
 		];
 
 	var CFG = {
-		size:{ painter:[1000,500], canvas:[1000,800]},
-		init_scale:1,
+		size:{ width:1000,height:800},
+		init_scale:.85,
 		brush_params:[5,60,5],
 		max_cancel_steps:5,
-		// textures:ARR_THEMES,
 		themes:ARR_THEMES,
 		models:ARR_MODELS		
 	};
