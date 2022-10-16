@@ -118,8 +118,6 @@ var Painter = {
 	update_model_layer:function(){
 		var w = this.$canvas[0].width;
 		var h = this.$canvas[0].height;	
-
-
 		var img = this.models.get_image();
 		var k = Math.min(w,h);	
 		var minWidth = k==w;
@@ -132,10 +130,8 @@ var Painter = {
 			var ratio = img.height/h;
 			var im_h = h;
 			var im_w = img.width/ratio;			
-		};
-		
-		this.model_ctx.drawImage(img,0,0,img.width,img.height,(w-im_w)/2,(h-im_h)/2,im_w,im_h);
-		console.log('update_model_layer')
+		};		
+		this.model_ctx.drawImage(img,0,0,img.width,img.height,(w-im_w)/2,(h-im_h)/2,im_w,im_h);		
 	},	
 
 	is_all_ready:function() {
@@ -269,6 +265,13 @@ var Painter = {
 			this.update_user_layer();
 			this.compose();
 		});		
+		$(this.models).on('onchanged',()=>{
+			this.update_model_layer();
+			// this.update_texture_layer();
+			// this.update_user_layer();
+			console.log("models onchanged")
+			this.compose();
+		});				
 
 
 	},
@@ -1062,8 +1065,8 @@ var ARR_THEMES = {
 
 var ARR_MODELS = [
 		{img:"img/model-1.png",title:"тельняшка с рукавами",pos:0},
-		{img:"img/model-1.png",title:"тельняшка без рукавов",pos:1},
-		{img:"img/model-1.png",title:"тельняшка-платье с рукавами",pos:2}
+		{img:"img/model-2.png",title:"тельняшка без рукавов",pos:1},
+		{img:"img/model-3.png",title:"тельняшка-платье с рукавами",pos:2}
 		];
 
 	var CFG = {
