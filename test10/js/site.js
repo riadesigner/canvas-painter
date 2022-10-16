@@ -37,7 +37,6 @@ var Painter = {
 		this.BRUSH = params.brush;
 		this.ZOOM = params.zoom;
 		this.models = params.models;
-		// this.textures = params.textures;
 		this.CANCELSYSTEM = params.cancelSystem;	
 		this.themesSystem = params.themesSystem;				
 
@@ -66,8 +65,6 @@ var Painter = {
 		this.CANVAS_HEIGHT = this.PARAM.c_h * this.PIXEL_ASPECT;
 
 		var b = this.get_bounds();
-		
-		// this.$painter.css({width:this.PARAM.w,height:this.PARAM.h,overflow:'hidden'});
 
 		this.$canvas = $("<canvas></canvas>");		
 		this.$canvas.attr({width:this.CANVAS_WIDTH,height:this.CANVAS_HEIGHT});
@@ -117,8 +114,9 @@ var Painter = {
 	},
 	update_model_layer:function(){
 		var w = this.$canvas[0].width;
-		var h = this.$canvas[0].height;	
+		var h = this.$canvas[0].height;			
 		var img = this.models.get_image();
+		
 		var k = Math.min(w,h);	
 		var minWidth = k==w;
 		
@@ -131,6 +129,7 @@ var Painter = {
 			var im_h = h;
 			var im_w = img.width/ratio;			
 		};		
+		this.model_ctx.clearRect(0, 0,w,h);
 		this.model_ctx.drawImage(img,0,0,img.width,img.height,(w-im_w)/2,(h-im_h)/2,im_w,im_h);		
 	},	
 
@@ -1000,10 +999,9 @@ var PainterModel = {
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$modelTools);
-		this.behavior();
-		// this.update_status();
+		this.behavior();		
 	},
-	get_image:function() {
+	get_image:function() {		
 		return this.ARR_LOADED[this.CURRENT];
 	},	
 	get_status:function() {
@@ -1022,13 +1020,14 @@ var PainterModel = {
 			img.onload = function() {
 				_this.ARR_LOADED.push(this);
 				_this.preload();
-			};
+			};			
 			img.src = src.img;
 		}else{
 			_this.set_all_loaded();	
 		}
 	},
 	set_current:function(index) {		
+		this.CURRENT = index;
 		this.$modelTools && this.$modelTools.find('>div').removeClass('current').eq(index).addClass('current');
 		$(this).trigger('onchanged');
 	}
