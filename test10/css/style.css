@@ -191,7 +191,31 @@ align-items: center;
 #painter-themes-tool .content ul li div span{width: 19px;height: 19px;background: #04A1AB;border-radius:50%;display: block;margin: 0 auto;}
 #painter-themes-tool .content ul li.current{border:2px solid rgba(255,255,255,.5);}
 
+#painter-model-tools{
+		position: absolute;bottom:56px;left:30px;width: 280px;height: 90px;
+		background: #262626ee;border-radius: 10px; padding:13px;
+		display: flex;column-gap:10px;
+	}
+.painter-model-tools-01,
+.painter-model-tools-02,
+.painter-model-tools-03{
+	width: 33.3%;height: 100%;border:2px solid #424242;
+	border-radius: 9px;transition: .3s;
+	background: url("../i/icons-dress.png") no-repeat 0 0/ 300% auto;
+}
 
+.painter-model-tools-01{background-position: 0 95%;}
+.painter-model-tools-02{background-position: 50% 95%;}
+.painter-model-tools-03{background-position: 100% 95%;}
+
+.painter-model-tools-01.current{background-position: 0 5%;}
+.painter-model-tools-02.current{background-position: 50% 5%;}
+.painter-model-tools-03.current{background-position: 100% 5%;}
+
+#painter-model-tools .current{background-color: #424242;}
+#painter-model-tools div:not(.current){cursor: pointer;}
+#painter-model-tools div:not(.current):hover{border:2px solid #777777;}
+#painter-model-tools div:not(.current):active{background-color: #424242;transition: 0s;}
 
 
 

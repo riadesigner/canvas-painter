@@ -182,7 +182,8 @@ var Painter = {
 				_this.ZOOM.is_hover() || 
 				_this.BRUSH.is_hover() ||
 				_this.CANCELSYSTEM.is_hover() ||
-				_this.themesSystem.is_hover() ) return false;
+				_this.themesSystem.is_hover() ||
+				_this.models.is_hover() ) return false;
 
 			if(_this.SPACEBAR_PRESSED){
 				// PAN
@@ -959,22 +960,45 @@ var PainterModel = {
 		this.$parent = $('#'+painter_id);
 		this.ARR = arr_models || [];
 		this.ARR_LOADED = [];
-		this.ALL_READY = false;
-		this.set_status("Загружаются модели...");
-		this.set_current(0);		
+		this.ALL_READY = false;		
+		this.CURRENT = 0;
+		this.set_status("Загружаются модели...");		
 		this.preload(0);
+
 		// this.behavior();
 		return this;
 	},
 	is_ready:function() {
 		return this.ALL_READY;
 	},
+	is_hover:function() {
+		return this.IS_HOVER;
+	},
 	behavior:function() {
-		
+		var _this=this;		
+		this.$modelTools.find('>div').each(function(index){
+			$(this).on("touchend, click",function(e) {
+				_this.set_current(index);
+			});
+		});
+		this.$modelTools.hover(()=>{this.IS_HOVER=true;},()=>{this.IS_HOVER=false;});
 	},
 	set_all_loaded:function() {
-		this.ALL_READY = true;
+		this.ALL_READY = true;		
+		this.build();
 		$(this).trigger('all-loaded');
+	},
+	build:function() {
+		this.$modelTools = $([
+			'<div id="painter-model-tools" class="noselect">',
+			'<div class="painter-model-tools-01 current"></div>',
+			'<div class="painter-model-tools-02"></div>',
+			'<div class="painter-model-tools-03"></div>',
+			'</div>'
+			].join(''));
+		this.$parent.append(this.$modelTools);
+		this.behavior();
+		// this.update_status();
 	},
 	get_image:function() {
 		return this.ARR_LOADED[this.CURRENT];
@@ -1001,8 +1025,9 @@ var PainterModel = {
 			_this.set_all_loaded();	
 		}
 	},
-	set_current:function(index) {
-		this.CURRENT = index;
+	set_current:function(index) {		
+		this.$modelTools && this.$modelTools.find('>div').removeClass('current').eq(index).addClass('current');
+		$(this).trigger('onchanged');
 	}
 
 };
@@ -1036,9 +1061,9 @@ var ARR_THEMES = {
 		};
 
 var ARR_MODELS = [
-		{img:"img/model-1.png",title:"тельняшка с рукавами"},
-		{img:"img/model-1.png",title:"тельняшка без рукавов"},
-		{img:"img/model-1.png",title:"тельняшка-платье с рукавами"}
+		{img:"img/model-1.png",title:"тельняшка с рукавами",pos:0},
+		{img:"img/model-1.png",title:"тельняшка без рукавов",pos:1},
+		{img:"img/model-1.png",title:"тельняшка-платье с рукавами",pos:2}
 		];
 
 	var CFG = {
