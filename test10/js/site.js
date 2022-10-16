@@ -180,7 +180,7 @@ var Painter = {
 				_this.themesSystem.is_hover() ||
 				_this.models.is_hover() ) return false;
 
-			if(_this.SPACEBAR_PRESSED){
+			if(_this.SPACEBAR_PRESSED || _this.ZOOM.pan_chosen() ){
 				// PAN
 				_this.DRAW_MODE = false;
 				_this.PAN_MODE = true;
@@ -658,6 +658,7 @@ var PainterZoom = {
 		var init_scale = init_scale?init_scale:1;
 		this.SCALE = init_scale*100;	
 		this.STEP_SCALE = 15;	
+		this.PAN_CHOSEN = false;
 		this.build();
 		return this;
 	},
@@ -668,7 +669,21 @@ var PainterZoom = {
 	get_scale:function(){
 		return this.SCALE;
 	},
+	pan_chosen:function(){
+		return this.PAN_CHOSEN;
+	},
 	//private
+	toggle_pan_tool:function() {
+		if(!this.PAN_CHOSEN){
+			this.PAN_CHOSEN = true;
+			this.$pan_tool.addClass('chosen');
+			document.body.style.cursor = 'grab';
+		}else{
+			this.$pan_tool.removeClass('chosen');
+			this.PAN_CHOSEN = false;
+			document.body.style.cursor = 'default';
+		}
+	},
 	update_status:function(){
 		this.set_status("Масштаб: "+this.SCALE+"%");
 	},
@@ -690,24 +705,19 @@ var PainterZoom = {
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$zoom);
+		this.$pan_tool = this.$zoom.find('.painter-zoom-pan');
+		this.$zoom_in_tool = this.$zoom.find('.painter-zoom-in');
+		this.$zoom_out_tool = this.$zoom.find('.painter-zoom-out');
 		this.behavior();
 		this.update_status();
 	},		
 	behavior:function(){
-		var _this=this;
-		$('#painter-zoom-id .painter-zoom-in').on("touchend, click",function(){			
-			_this.zoom_in();
-			return false;
-		});
-		$('#painter-zoom-id .painter-zoom-out').on("touchend, click",function(){			
-			_this.zoom_out();
-			return false;
-		});		
-		$('#painter-zoom-id').hover(function() {
-			_this.IS_HOVER = true;
-		},function() {
-			_this.IS_HOVER = false;
-		});
+		
+		this.$zoom_in_tool.on("touchend, click",()=>{ this.zoom_in(); return false; });
+		this.$zoom_out_tool.on("touchend, click",()=>{ this.zoom_out(); return false; });				
+		this.$pan_tool.on("touchend, click", ()=>{ this.toggle_pan_tool(); });		
+		this.$zoom.hover(() =>{ this.IS_HOVER = true;},()=> {this.IS_HOVER = false;});
+
 	},
 	zoom_in:function(){
 		this.SCALE +=this.STEP_SCALE;
