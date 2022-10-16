@@ -106,11 +106,13 @@ var Painter = {
 		this.compose();
 
 	},
-
+	update_user_layer:function() {
+		this.brush_show_texture(this.user_ctx);
+	},
 	update_texture_layer:function(){
 		var w = this.$canvas[0].width;
 		var h = this.$canvas[0].height;		
-		var img = this.themesSystem.get_image(); //xxx
+		var img = this.themesSystem.get_image();
 		this.brush_texture_ctx.drawImage(img,0,0,img.width,img.height,0,0,w,h);
 	},
 	update_model_layer:function(){
@@ -149,12 +151,7 @@ var Painter = {
 	behavior:function() {
 		var _this=this;		
 
-		$(this.themesSystem).on('all-loaded',function() {			
-			_this.is_all_ready();			
-		});
-		$(this.models).on('all-loaded',function() {
-			_this.is_all_ready();
-		});		
+
 
 		this.$painter[0].onmousemove = function(event){
 			if(!_this.ALL_READY) return false;
@@ -263,6 +260,15 @@ var Painter = {
 			if(!_this.ALL_READY) return false;
 			_this.clear();
 		});				
+
+		$(this.themesSystem).on('all-loaded',()=>{ this.is_all_ready(); });		
+		$(this.models).on('all-loaded',()=> { this.is_all_ready(); });		
+		$(this.themesSystem).on('onchanged',()=>{
+			this.update_texture_layer();
+			this.update_user_layer();
+			this.compose();
+		});		
+
 
 	},
 	get_bounds:function(){
@@ -728,7 +734,7 @@ var PainterThemes = {
 		this.ARR_TEXTURES_LOADED = [];
 		this.build();		
 		this.load_textures();
-		this.set_current(0);
+		this.set_current(1);
 		
 		return this;
 	},
@@ -740,6 +746,8 @@ var PainterThemes = {
 		return this.IS_READY;
 	},
 	get_image:function() {
+		console.log('get_image!')
+		console.log('this.CURRENT',this.CURRENT)
 		return this.ARR_TEXTURES_LOADED[this.CURRENT];
 	},	
 	//private
@@ -1006,10 +1014,10 @@ $(function(){
 
 var ARR_THEMES = {
 		textures:[
-			{img:"img/img1.jpg",color:"#04a098"},
-			{img:"img/img1.jpg",color:"#418dcc"},
-			{img:"img/img1.jpg",color:"#0d4bac"},
-			{img:"img/img1.jpg",color:"#8E6386"}
+			{img:"img/green.jpg",color:"#04a098"},
+			{img:"img/sky.jpg",color:"#418dcc"},
+			{img:"img/blue.jpg",color:"#0d4bac"},
+			{img:"img/purple.jpg",color:"#8E6386"}
 			],
 		lines:{
 			black:"#000000",
