@@ -24,6 +24,7 @@ var Painter = {
 		this.DRAW_MODE = false;
 		this.PAN_MODE = false;
 		this.SPACEBAR_PRESSED = false;
+		this.PREVIEW_MODE = false;
 
 		this.world_coord = [0,0];
 		this.p_offset = {top:0,left:0};
@@ -79,7 +80,7 @@ var Painter = {
 		this.bg_ctx = this.bg_canvas.getContext('2d');
 		this.bg_canvas.width = this.CANVAS_WIDTH;
 		this.bg_canvas.height = this.CANVAS_HEIGHT;
-		this.draw_bg_canvas();
+		this.update_bg_layer();
 
 		this.brush_texture_canvas = document.createElement('canvas');
 		this.brush_texture_ctx = this.brush_texture_canvas.getContext('2d',{willReadFrequently: true});
@@ -89,7 +90,12 @@ var Painter = {
 		this.model_canvas = document.createElement('canvas');
 		this.model_ctx = this.model_canvas.getContext('2d');
 		this.model_canvas.width = this.CANVAS_WIDTH;
-		this.model_canvas.height = this.CANVAS_HEIGHT;		
+		this.model_canvas.height = this.CANVAS_HEIGHT;
+
+		this.mask_canvas = document.createElement('canvas');
+		this.mask_ctx = this.mask_canvas.getContext('2d');
+		this.mask_canvas.width = this.CANVAS_WIDTH;
+		this.mask_canvas.height = this.CANVAS_HEIGHT;		
 
 		this.user_canvas = document.createElement('canvas');
 		this.user_ctx = this.user_canvas.getContext('2d');
@@ -103,6 +109,25 @@ var Painter = {
 		this.compose();
 
 	},
+	update_bg_layer:function(){
+		var ctx = this.bg_ctx;
+		var w = this.$canvas[0].width;
+		var h = this.$canvas[0].height;
+
+		if(this.ZOOM.is_preview_mode()){
+			ctx.fillStyle = "#444444";
+			ctx.fillRect(0, 0, w, h);
+		}else{
+			var counter = -1;
+			var row_height = 10;
+			var total = h/row_height+1;
+			for(var i=0;i<total;i++){
+				counter*=-1;
+				ctx.fillStyle = counter>0?"#000000":"#444444";
+				ctx.fillRect(0, i*row_height, w, row_height);
+			}
+		}
+	},	
 	update_user_layer:function() {
 		this.brush_show_texture(this.user_ctx);
 	},
@@ -112,14 +137,29 @@ var Painter = {
 		var img = this.themesSystem.get_image();
 		this.brush_texture_ctx.drawImage(img,0,0,img.width,img.height,0,0,w,h);
 	},
-	update_model_layer:function(){
+	update_mask_layer:function(){
+		var img = this.models.get_mask();
+		var size = this.calc_model_size(img);
+		this.mask_ctx.clearRect(0, 0,size.w,size.h);
+		this.mask_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );				
+	},
+	update_model_layer:function(){	
+
+		if(this.ZOOM.is_preview_mode()){
+			var img = this.models.get_preview();
+		}else{
+			var img = this.models.get_image();
+		};	
+
+		var size = this.calc_model_size(img);
+		this.model_ctx.clearRect(0, 0,size.w,size.h);
+		this.model_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );		
+	},	
+	calc_model_size:function(img){
 		var w = this.$canvas[0].width;
-		var h = this.$canvas[0].height;			
-		var img = this.models.get_image();
-		
+		var h = this.$canvas[0].height;
 		var k = Math.min(w,h);	
-		var minWidth = k==w;
-		
+		var minWidth = k==w;		
 		if(minWidth){			
 			var ratio = img.width/w;
 			var im_w = w;
@@ -128,11 +168,14 @@ var Painter = {
 			var ratio = img.height/h;
 			var im_h = h;
 			var im_w = img.width/ratio;			
-		};		
-		this.model_ctx.clearRect(0, 0,w,h);
-		this.model_ctx.drawImage(img,0,0,img.width,img.height,(w-im_w)/2,(h-im_h)/2,im_w,im_h);		
-	},	
-
+		};	
+		var size = 	{
+			w:w, h:h,
+			left:(w-im_w)/2, top:(h-im_h)/2,
+			im_w:im_w, im_h:im_h
+			};
+		return size;
+	},
 	is_all_ready:function() {
 		if(this.themesSystem.is_ready() && this.models.is_ready()){
 			this.ALL_READY = true;
@@ -144,9 +187,7 @@ var Painter = {
 		}
 	},
 	behavior:function() {
-		var _this=this;		
-
-
+		var _this=this;
 
 		this.$painter[0].onmousemove = function(event){
 			if(!_this.ALL_READY) return false;
@@ -155,7 +196,6 @@ var Painter = {
 				var b = _this.get_bounds();
 				_this.lastX = _this.posX;
 				_this.lastY = _this.posY;
-
 				
 				_this.posX = (event.pageX - _this.p_offset.left - b.left) / s * _this.PIXEL_ASPECT;
 				_this.posY = (event.pageY - _this.p_offset.top - b.top) / s * _this.PIXEL_ASPECT;
@@ -250,8 +290,21 @@ var Painter = {
 		$(this.ZOOM).on('scale-updated',function(){		
 			if(!_this.ALL_READY) return false;
 			_this.SCALE_ASPECT = _this.ZOOM.get_scale()/100;	
-			_this.canvas_update_pos();			
+			_this.canvas_update_pos();
+		});
+
+		$(this.ZOOM).on('changed-preview-mode',(e, previewMode)=>{
+			if(!this.ALL_READY) return false;
+			// this.update_texture_layer();
+			// this.update_user_layer();
+			// this.update_model_layer();			
+
+			this.update_bg_layer();
+			this.update_model_layer();
+			this.compose();
+
 		});		
+
 		$(this.BRUSH).on('clearall',function(){		
 			if(!_this.ALL_READY) return false;
 			_this.clear();
@@ -266,12 +319,8 @@ var Painter = {
 		});		
 		$(this.models).on('onchanged',()=>{
 			this.update_model_layer();
-			// this.update_texture_layer();
-			// this.update_user_layer();
-			console.log("models onchanged")
 			this.compose();
 		});				
-
 
 	},
 	get_bounds:function(){
@@ -285,9 +334,15 @@ var Painter = {
 		return bounds;
 	},
 	compose:function(){		
-		this.ctx.drawImage(this.bg_canvas,0,0); 		
-		this.ctx.drawImage(this.user_canvas,0,0);
-		this.ctx.drawImage(this.model_canvas,0,0);  
+		if(this.ZOOM.is_preview_mode()){
+			this.ctx.drawImage(this.bg_canvas,0,0);
+			this.ctx.drawImage(this.model_canvas,0,0);
+			this.ctx.drawImage(this.user_canvas,0,0);
+		}else{
+			this.ctx.drawImage(this.bg_canvas,0,0);
+			this.ctx.drawImage(this.user_canvas,0,0);
+			this.ctx.drawImage(this.model_canvas,0,0);
+		}
 	},
 	canvas_update_pos:function(){		
 		var b = this.get_bounds();
@@ -394,19 +449,7 @@ var Painter = {
 			_this.compose();
 		},0);
 	},
-	draw_bg_canvas:function(){
-		var ctx = this.bg_ctx;
-		var w = this.$canvas[0].width;
-		var h = this.$canvas[0].height;
-		var counter = -1;
-		var row_height = 10;
-		var total = h/row_height+1;
-		for(var i=0;i<total;i++){
-			counter*=-1;
-			ctx.fillStyle = counter>0?"#000000":"#444444";
-			ctx.fillRect(0, i*row_height, w, row_height);
-		}		
-	},
+
 	draw_line:function(ctx) {		
 		var _this=this;
 		
@@ -684,6 +727,7 @@ var PainterZoom = {
 		this.SCALE = init_scale*100;	
 		this.STEP_SCALE = 15;	
 		this.PAN_CHOSEN = false;
+		this.PREVIEW_MODE = false;
 		this.build();
 		return this;
 	},
@@ -697,6 +741,9 @@ var PainterZoom = {
 	pan_chosen:function(){
 		return this.PAN_CHOSEN;
 	},
+	is_preview_mode:function(){
+		return this.PREVIEW_MODE;
+	},
 	//private
 	toggle_pan_tool:function() {
 		if(!this.PAN_CHOSEN){
@@ -709,6 +756,17 @@ var PainterZoom = {
 			document.body.style.cursor = 'default';
 		}
 	},
+	toggle_preview_mode:function(){
+		if(this.PREVIEW_MODE){
+			this.PREVIEW_MODE=false;
+			this.$preview_tool.removeClass('chosen');
+			$(this).trigger("changed-preview-mode",this.PREVIEW_MODE);
+		}else{
+			this.PREVIEW_MODE=true;			
+			this.$preview_tool.addClass('chosen');
+			$(this).trigger("changed-preview-mode",this.PREVIEW_MODE);
+		}
+	},	
 	update_status:function(){
 		this.set_status("Масштаб: "+this.SCALE+"%");
 	},
@@ -733,6 +791,7 @@ var PainterZoom = {
 		this.$pan_tool = this.$zoom.find('.painter-zoom-pan');
 		this.$zoom_in_tool = this.$zoom.find('.painter-zoom-in');
 		this.$zoom_out_tool = this.$zoom.find('.painter-zoom-out');
+		this.$preview_tool = this.$zoom.find('.painter-zoom-preview');
 		this.behavior();
 		this.update_status();
 	},		
@@ -742,6 +801,7 @@ var PainterZoom = {
 		this.$zoom_out_tool.on("touchend, click",()=>{ this.zoom_out(); return false; });				
 		this.$pan_tool.on("touchend, click", ()=>{ this.toggle_pan_tool(); });		
 		this.$zoom.hover(() =>{ this.IS_HOVER = true;},()=> {this.IS_HOVER = false;});
+		this.$preview_tool.on("touchend, click",()=>{ this.toggle_preview_mode(); })
 
 	},
 	zoom_in:function(){
@@ -785,7 +845,7 @@ var PainterThemes = {
 	},
 	get_image:function() {		
 		return this.ARR_TEXTURES_LOADED[this.SETS[this.CURRENT].texture];
-	},	
+	},
 	//private
 	get_all_names:function() {
 		var arr_nm = []; 
@@ -1044,6 +1104,12 @@ var PainterModel = {
 	get_image:function() {		
 		return this.ARR_IMAGE_LOADED[this.CURRENT];
 	},	
+	get_mask:function() {		
+		return this.ARR_MASK_LOADED[this.CURRENT];
+	},		
+	get_preview:function() {		
+		return this.ARR_PREVIEW_LOADED[this.CURRENT];
+	},			
 	get_status:function() {
 		return this.STATUS;
 	},
