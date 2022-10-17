@@ -783,10 +783,8 @@ var PainterThemes = {
 	is_ready:function() {
 		return this.IS_READY;
 	},
-	get_image:function() {
-		console.log('get_image!')
-		console.log('this.CURRENT',this.CURRENT)
-		return this.ARR_TEXTURES_LOADED[this.CURRENT];
+	get_image:function() {		
+		return this.ARR_TEXTURES_LOADED[this.SETS[this.CURRENT].texture];
 	},	
 	//private
 	get_all_names:function() {
@@ -805,8 +803,10 @@ var PainterThemes = {
 			}
 		};
 		var src = this.NEED_TO_LOAD.shift();
+
 		if(src){						
-			this.set_status("Загрузка текстуры..." );			
+			var counter = this.ARR_TEXTURES_LOADED.length +1;			
+			this.set_status("Загрузка текстуры ... " + counter );
 			var img = new Image();
 			img.onload = function(){
 				_this.ARR_TEXTURES_LOADED.push(img);
@@ -815,13 +815,14 @@ var PainterThemes = {
 			img.src = src;			
 		}else{						
 			this.IS_READY = true;			
-			this.set_status("Загружено текстур: " + this.ARR_TEXTURES_LOADED.length );
+			this.set_status("Загружено текстур: " + this.ARR_TEXTURES_LOADED.length );			
 			$(this).trigger('all-loaded');			
 		}
 	},	
 
 	set_status:function(msg){
 		this.STATUS = msg;		
+		$(this).trigger('status-updated');
 	},
 	is_hover:function() {
 		return this.IS_HOVER;
@@ -829,12 +830,13 @@ var PainterThemes = {
 	set_current:function(index) {
 		var _this=this;
 		this.CURRENT = index;
-		var msg = 'Установлена тема:'+ index;		
+		var msg = 'Тема:'+ index;		
 		$.each(this.NAMES,function(i) { _this.$parent.removeClass(_this.NAMES[i]); });
 		this.$parent.addClass(this.NAMES[index]);
 		this.$parent.find('li').removeClass('current').eq(index).addClass('current');
 		this.set_status(msg);
 		$(this).trigger('onchanged',this.CURRENT);
+
 	},
 	build:function(){
 		var themes = ""; 
@@ -949,7 +951,7 @@ var PainterCancelSystem = {
 		remainder>0 ? this.$btnBack.removeClass('disabled'):this.$btnBack.addClass('disabled');
 		restore >0 ? this.$btnForw.removeClass('disabled'):this.$btnForw.addClass('disabled');		
 
-		this.STATUS = "доступно<br> отмен: "+remainder;
+		this.STATUS = "Отмен: "+remainder;
 		$(this).trigger('status-updated');		
 	}
 }
@@ -976,7 +978,8 @@ var PainterStatusbar = {
 	set:function(msg,section){
 		var section = section?section:0;
 		this.$statusbar.find('span:eq('+section+')').html(msg);
-		this.$statusbar.find('span').css({width:100/this.ARR.length+'%'});
+		// this.$statusbar.find('span').css({width:100/(this.ARR.length+2)+'%'});
+		this.$statusbar.find('span').css({'margin-right':'20px'});
 	},
 	build:function(){
 		var str_sections = "";
@@ -996,12 +999,13 @@ var PainterModel = {
 	init:function(painter_id,arr_models) {
 		this.$parent = $('#'+painter_id);
 		this.ARR = arr_models || [];
-		this.ARR_LOADED = [];
+		this.ARR_IMAGE_LOADED = [];
+		this.ARR_MASK_LOADED = [];
+		this.ARR_PREVIEW_LOADED = [];
 		this.ALL_READY = false;		
 		this.CURRENT = 0;
-		this.set_status("Загружаются модели...");		
-		this.preload(0);
-
+		this.set_status("Загрузка моделей ...");
+		this.preload();
 		// this.behavior();
 		return this;
 	},
@@ -1022,8 +1026,9 @@ var PainterModel = {
 	},
 	set_all_loaded:function() {
 		this.ALL_READY = true;		
-		this.build();
+		this.build();		
 		$(this).trigger('all-loaded');
+		this.set_status("Всего моделей "+ this.ARR.length);
 	},
 	build:function() {
 		this.$modelTools = $([
@@ -1037,7 +1042,7 @@ var PainterModel = {
 		this.behavior();		
 	},
 	get_image:function() {		
-		return this.ARR_LOADED[this.CURRENT];
+		return this.ARR_IMAGE_LOADED[this.CURRENT];
 	},	
 	get_status:function() {
 		return this.STATUS;
@@ -1047,16 +1052,35 @@ var PainterModel = {
 		$(this).trigger('status-updated');
 	},	
 	preload:function() {
-		var _this=this;								
-		this.set_status("Загружено моделей: "+ _this.ARR_LOADED.length);						
-		var src = this.ARR.shift();
-		if(src){
+		var _this=this;		
+		if(!this.NEED_TO_LOAD){
+			this.NEED_TO_LOAD = [];
+			for(var i in this.ARR){
+				this.NEED_TO_LOAD.push(this.ARR[i]);
+			}
+		};		
+		var data = this.NEED_TO_LOAD.shift();
+		if(data){
+			
 			var img = new Image();
 			img.onload = function() {
-				_this.ARR_LOADED.push(this);
-				_this.preload();
+				_this.ARR_IMAGE_LOADED.push(this);
+				//
+				var mask = new Image();
+				mask.onload = function() {
+					_this.ARR_MASK_LOADED.push(this);
+					//
+					var preview = new Image();
+					preview.onload = function() {
+						_this.ARR_PREVIEW_LOADED.push(this);
+						_this.preload();
+					};			
+					preview.src = data.preview;
+				};			
+				mask.src = data.mask;					
 			};			
-			img.src = src.img;
+			img.src = data.img;
+
 		}else{
 			_this.set_all_loaded();	
 		}
@@ -1098,9 +1122,9 @@ var ARR_THEMES = {
 		};
 
 var ARR_MODELS = [
-		{img:"img/model-1.png",title:"тельняшка с рукавами",pos:0},
-		{img:"img/model-2.png",title:"тельняшка без рукавов",pos:1},
-		{img:"img/model-3.png",title:"тельняшка-платье с рукавами",pos:2}
+		{pos:0,img:"i/model-1.png",title:"тельняшка с рукавами",mask:"i/model-1-mask.png",preview:"i/model-1-preview.png"},
+		{pos:1,img:"i/model-2.png",title:"тельняшка без рукавов",mask:"i/model-1-mask.png",preview:"i/model-1-preview.png"},
+		{pos:2,img:"i/model-3.png",title:"тельняшка-платье с рукавами",mask:"i/model-1-mask.png",preview:"i/model-1-preview.png"}
 		];
 
 	var CFG = {
@@ -1128,7 +1152,7 @@ var ARR_MODELS = [
 			this.cancelSystem.init('painter',CFG.max_cancel_steps);
 			this.themesSystem.init('painter',CFG.themes);			
 			this.statusbar.init('painter',[
-				Painter,this.brush,this.zoom,this.cancelSystem,this.models,this.themesSystem]);
+				Painter,this.models,this.zoom,this.themesSystem]);
 		}
 	});
 
