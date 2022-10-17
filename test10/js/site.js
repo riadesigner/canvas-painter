@@ -495,17 +495,15 @@ var PainterBrush = {
 		this.$parent = $('#'+painter_id);
 
 		this.BRUSH_SIZE_MIN = arr_params[0];
-		this.BRUSH_SIZE_MAX = arr_params[1];
-		this.BRUSH_SIZE_STEP = arr_params[2];
-
-		this.BRUSH_SIZE_CURRENT = (this.BRUSH_SIZE_MAX-this.BRUSH_SIZE_MIN)/2+this.BRUSH_SIZE_MIN;		
+		this.BRUSH_SIZE_MAX = arr_params[1];				
 		this.DRAWING_MODE = true;
 		
 		this.set_status("режим рисования");
 		this.update_drawing_mode(true);
 
-		this.build();		
+		this.build();			
 		this.set_current('brush');
+		this.b_size_update(50);
 
 		return this;
 	},
@@ -529,18 +527,25 @@ var PainterBrush = {
 			'<div class="painter-tools-brush current"></div>',
 			'<div class="painter-tools-eraser"></div>',
 			'<div class="painter-tools-clearall"></div>',
-			'<div class="painter-tools-brushsizer"><span><span></span></span></div>',
+			'<div class="painter-tools-brushsizer"><span class="header"><span></span></span></div>',
 			'</div>'
 			].join(''));
 		this.$parent.append(this.$tools);
 
 		this.$b_sizer = this.$tools.find('.painter-tools-brushsizer');
+		this.$b_sizer_header = this.$b_sizer.find('.header');
 		this.B_SIZER_TOP = this.$b_sizer.offset().top;
+		this.B_SIZER_HEIGHT = this.$b_sizer.height();
+		this.B_SIZER_HEADER_HEIGHT = this.$b_sizer_header.height();
 		this.behavior();
-		this.b_size_update();		
+		this.b_size_update(0);
 	},	
-	b_size_update:function(){
-
+	b_size_update:function(pr){		
+		var topY = (this.B_SIZER_HEIGHT-this.B_SIZER_HEADER_HEIGHT)/100*pr;
+		var scale = 1;
+		var scale = map_range((100-pr),0,100,45,85) / 100;
+		this.$b_sizer_header.css({transform:"translateY("+topY+"px) scale("+scale+")"});				
+		this.BRUSH_SIZE_CURRENT = map_range((100-pr),0,100,this.BRUSH_SIZE_MIN,this.BRUSH_SIZE_MAX);		
 	},
 	set_current:function(tool_name) {
 		var $t = this.$tools.find('.painter-tools-'+ tool_name);
@@ -583,8 +588,8 @@ var PainterBrush = {
 			'.painter-tools-clearall',
 			'.painter-tools-brushsizer'
 			].join(', '); 
-		this.$tools.find(all_tools).hover(function() {			
-		 _this.IS_HOVER = true;},function() { _this.IS_HOVER = false;});
+		
+		this.$tools.find(all_tools).hover(()=> { this.IS_HOVER = true;},()=>{ this.IS_HOVER = false;});
 
 		this.$tools.find('.painter-tools-brush').on('touchend, click',function(){
 			_this.update_drawing_mode(true);
@@ -600,11 +605,31 @@ var PainterBrush = {
 		this.$tools.find('.painter-tools-newdoc').on('touchend, click',function(){			
 			_this.say("newdoc");
 		});			
-		console.log('this.$b_sizer',this.$b_sizer[0])
-		this.$b_sizer[0].addEventListener('mousemove',function(e) {			
-			console.log(e.pageY-_this.B_SIZER_TOP);
-		});			
-
+		
+		var foo = {
+			calc:function(e){
+			if(!_this.B_SIZER_HANDLED)return false;
+			var SPECIAL_OFFSET = 24; 
+			var h = _this.B_SIZER_HEIGHT-SPECIAL_OFFSET*2;
+			if(e.touches && e.touches.length){
+				var posY = e.touches[0].pageY;
+			}else{
+				var posY = e.pageY;
+			};
+			var pos = posY-_this.B_SIZER_TOP-SPECIAL_OFFSET;			
+			var persents = 100/h*pos;
+			persents = persents<0?0:persents;
+			persents = persents>100?100:persents;
+			_this.b_size_update(persents);
+			}
+		};
+		this.$b_sizer[0].addEventListener('mousemove',(e)=> {foo.calc(e);});
+		this.$b_sizer[0].addEventListener('touchmove',(e)=> {foo.calc(e);});
+		this.$b_sizer[0].addEventListener('touchstart',(e)=>{ this.B_SIZER_HANDLED = true;foo.calc(e); });
+		this.$b_sizer[0].addEventListener('mousedown',(e)=>{ this.B_SIZER_HANDLED = true;foo.calc(e);});
+		this.$b_sizer[0].addEventListener('touchend',(e)=>{this.B_SIZER_HANDLED = false; });		
+		document.addEventListener('mouseup',(e)=>{ this.B_SIZER_HANDLED = false;});		
+		
 	},
 	say:function(msg){		
 		$(this).trigger(msg);
@@ -1081,7 +1106,7 @@ var ARR_MODELS = [
 	var CFG = {
 		size:{ width:1000,height:800},
 		init_scale:.85,
-		brush_params:[5,60,5],
+		brush_params:[5,60],
 		max_cancel_steps:5,
 		themes:ARR_THEMES,
 		models:ARR_MODELS		
@@ -1110,4 +1135,7 @@ var ARR_MODELS = [
  
 });
 
+function map_range(value, low1, high1, low2, high2) {
+    return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
 
