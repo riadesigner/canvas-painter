@@ -92,10 +92,10 @@ var Painter = {
 		this.model_canvas.width = this.CANVAS_WIDTH;
 		this.model_canvas.height = this.CANVAS_HEIGHT;
 
-		this.mask_canvas = document.createElement('canvas');
-		this.mask_ctx = this.mask_canvas.getContext('2d');
-		this.mask_canvas.width = this.CANVAS_WIDTH;
-		this.mask_canvas.height = this.CANVAS_HEIGHT;		
+		this.masked_canvas = document.createElement('canvas');
+		this.masked_ctx = this.masked_canvas.getContext('2d');
+		this.masked_canvas.width = this.CANVAS_WIDTH;
+		this.masked_canvas.height = this.CANVAS_HEIGHT;		
 
 		this.user_canvas = document.createElement('canvas');
 		this.user_ctx = this.user_canvas.getContext('2d');
@@ -137,11 +137,11 @@ var Painter = {
 		var img = this.themesSystem.get_image();
 		this.brush_texture_ctx.drawImage(img,0,0,img.width,img.height,0,0,w,h);
 	},
-	update_mask_layer:function(){
+	update_masked_layer:function(){
 		var img = this.models.get_mask();
 		var size = this.calc_model_size(img);
-		this.mask_ctx.clearRect(0, 0,size.w,size.h);
-		this.mask_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );				
+		this.masked_ctx.clearRect(0, 0,size.w,size.h);
+		this.masked_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );				
 	},
 	update_model_layer:function(){	
 
@@ -295,14 +295,10 @@ var Painter = {
 
 		$(this.ZOOM).on('changed-preview-mode',(e, previewMode)=>{
 			if(!this.ALL_READY) return false;
-			// this.update_texture_layer();
-			// this.update_user_layer();
-			// this.update_model_layer();			
-
 			this.update_bg_layer();
+			this.update_masked_layer();
 			this.update_model_layer();
 			this.compose();
-
 		});		
 
 		$(this.BRUSH).on('clearall',function(){		
