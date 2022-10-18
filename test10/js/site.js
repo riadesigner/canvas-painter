@@ -130,12 +130,13 @@ var Painter = {
 		}
 	},	
 	update_user_layer:function() {
-		this.brush_show_texture(this.user_ctx);
+		this.brush_show_texture(this.user_ctx,"fast");
 	},
 	update_texture_layer:function(){
 		var w = this.$canvas[0].width;
 		var h = this.$canvas[0].height;		
 		var img = this.themesSystem.get_image();
+		console.log('img',img)
 		this.brush_texture_ctx.drawImage(img,0,0,img.width,img.height,0,0,w,h);
 	},
 	update_masked_layer:function(){
@@ -338,7 +339,7 @@ var Painter = {
 				this.update_texture_layer();
 				this.update_user_layer();
 				this.update_masked_layer();
-				// this.update_model_layer();
+				//this.update_model_layer();
 				this.compose();
 
 			}else{
@@ -474,7 +475,7 @@ var Painter = {
 		var b= Math.floor(Math.random() * 254);
 		return 'rgba('+r+','+g+','+b+',1)';
 	},
-	brush_show_texture:function(ctx,rush){
+	brush_show_texture:function(ctx,fast){		
 		var _this=this;
 		var foo = {
 			draw:function(){
@@ -487,7 +488,7 @@ var Painter = {
 			}
 		};		
 		this.TMR_BRUSH_TEXTURE && clearTimeout(this.TMR_BRUSH_TEXTURE); 
-		if(rush){
+		if(fast){
 			foo.draw();
 		}else{
 			this.TMR_BRUSH_TEXTURE = setTimeout(function(){ foo.draw(); },0);	
