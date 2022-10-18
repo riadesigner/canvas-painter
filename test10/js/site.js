@@ -313,27 +313,51 @@ var Painter = {
 			this.ZOOM.change_pan_mode(false);
 			this.ZOOM.change_preview_mode(false);
 			this.updated_preview_mode();
-
 		});				
-
 		$(this.BRUSH).on('clearall',(e)=>{
 			if(!this.ALL_READY) return false;
 			this.clear();
 		});				
 
 		$(this.themesSystem).on('all-loaded',()=>{ this.is_all_ready(); });		
-		$(this.models).on('all-loaded',()=> { this.is_all_ready(); });		
-		$(this.themesSystem).on('onchanged',()=>{
-			this.update_texture_layer();
-			this.update_user_layer();
-			this.compose();
-		});		
+		$(this.models).on('all-loaded',()=> { this.is_all_ready(); });			
+		$(this.themesSystem).on('onchanged',(index)=>{ this.theme_changed(index);});		
+
 		$(this.models).on('onchanged',()=>{
 			this.update_model_layer();
 			this.compose();
 		});				
 
 	},
+	theme_changed:function(index){
+										
+			if(this.ZOOM.is_preview_mode()){
+			
+				console.log("!! need change theme")	
+				// this.update_bg_layer();
+				this.update_texture_layer();
+				this.update_user_layer();
+				this.update_masked_layer();
+				// this.update_model_layer();
+				this.compose();
+
+			}else{
+				this.update_texture_layer();
+				this.update_user_layer();
+				this.compose();			
+			}
+	},
+	compose:function(){		
+		if(this.ZOOM.is_preview_mode()){
+			this.ctx.drawImage(this.bg_canvas,0,0);
+			this.ctx.drawImage(this.model_canvas,0,0);
+			this.ctx.drawImage(this.masked_canvas,0,0);
+		}else{
+			this.ctx.drawImage(this.bg_canvas,0,0);
+			this.ctx.drawImage(this.user_canvas,0,0);
+			this.ctx.drawImage(this.model_canvas,0,0);
+		}
+	},	
 	updated_pan_mode:function(panChosen) {
 		if(panChosen){
 			this.BRUSH.switch_off_all_brushes();
@@ -356,17 +380,6 @@ var Painter = {
 		var w_coord = this.world_coord;		
 		var bounds = {w:c_w*s, c_h:h*s, left:w_coord[0]+(w-c_w*s)*.5, top:w_coord[1]+(h-c_h*s)*.4};		
 		return bounds;
-	},
-	compose:function(){		
-		if(this.ZOOM.is_preview_mode()){
-			this.ctx.drawImage(this.bg_canvas,0,0);
-			this.ctx.drawImage(this.model_canvas,0,0);
-			this.ctx.drawImage(this.masked_canvas,0,0);
-		}else{
-			this.ctx.drawImage(this.bg_canvas,0,0);
-			this.ctx.drawImage(this.user_canvas,0,0);
-			this.ctx.drawImage(this.model_canvas,0,0);
-		}
 	},
 	canvas_update_pos:function(){		
 		var b = this.get_bounds();
@@ -461,17 +474,25 @@ var Painter = {
 		var b= Math.floor(Math.random() * 254);
 		return 'rgba('+r+','+g+','+b+',1)';
 	},
-	brush_show_texture:function(ctx){
+	brush_show_texture:function(ctx,rush){
 		var _this=this;
+		var foo = {
+			draw:function(){
+				ctx.save();
+				ctx.globalCompositeOperation='source-atop';			
+				var img = _this.brush_texture_canvas;
+				ctx.drawImage(img, 0, 0);
+				ctx.restore();
+				_this.compose();
+			}
+		};		
 		this.TMR_BRUSH_TEXTURE && clearTimeout(this.TMR_BRUSH_TEXTURE); 
-		this.TMR_BRUSH_TEXTURE = setTimeout(function(){
-			ctx.save();
-			ctx.globalCompositeOperation='source-atop';			
-			var img = _this.brush_texture_canvas;
-			ctx.drawImage(img, 0, 0);
-			ctx.restore();
-			_this.compose();
-		},0);
+		if(rush){
+			foo.draw();
+		}else{
+			this.TMR_BRUSH_TEXTURE = setTimeout(function(){ foo.draw(); },0);	
+		}
+		
 	},
 
 	draw_line:function(ctx) {		
@@ -973,8 +994,6 @@ var PainterThemes = {
 		this.$parent.addClass(this.NAMES[index]);
 		this.$parent.find('li').removeClass('current').eq(index).addClass('current');
 		this.set_status(msg);
-		$(this).trigger('onchanged',this.CURRENT);
-
 	},
 	build:function(){
 		var themes = ""; 
@@ -1003,7 +1022,8 @@ var PainterThemes = {
 		this.$themesTool.hover((e)=>{this.IS_HOVER=true;},(e)=>{this.IS_HOVER=false;});
 		this.$themesTool.find('li').each(function(index){
 			$(this).on("touchend, click",(e)=>{
-				_this.set_current(index);				
+				_this.set_current(index);	
+				$(_this).trigger('onchanged',index);
 			});
 		});
 	}
