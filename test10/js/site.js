@@ -296,28 +296,24 @@ var Painter = {
 			if(!_this.ALL_READY) return false;
 			_this.SCALE_ASPECT = _this.ZOOM.get_scale()/100;	
 			_this.canvas_update_pos();
-		});
-
-		$(this.ZOOM).on('changed-preview-mode',(e, previewMode)=>{
-			if(!this.ALL_READY) return false;
-			this.update_bg_layer();
-			this.update_masked_layer();
-			this.update_model_layer();
-			this.compose();
-		});		
+		});	
 
 		$(this.ZOOM).on('pan-mode-updated',(e, panChosen)=>{
 			if(!this.ALL_READY) return false;
-			if(panChosen){
-				this.BRUSH.switch_off_all_brushes();
-			}else{
-				this.BRUSH.switch_on_last_brush();
-			}
+			this.updated_pan_mode(panChosen);
 		});
+
+		$(this.ZOOM).on('preview-mode-updated',(e, previewMode)=>{
+			if(!this.ALL_READY) return false;
+			this.updated_preview_mode();
+		});			
 
 		$(this.BRUSH).on('current-updated',(e)=>{		
 			if(!this.ALL_READY) return false;
 			this.ZOOM.change_pan_mode(false);
+			this.ZOOM.change_preview_mode(false);
+			this.updated_preview_mode();
+
 		});				
 
 		$(this.BRUSH).on('clearall',(e)=>{
@@ -337,6 +333,19 @@ var Painter = {
 			this.compose();
 		});				
 
+	},
+	updated_pan_mode:function(panChosen) {
+		if(panChosen){
+			this.BRUSH.switch_off_all_brushes();
+		}else{
+			this.BRUSH.switch_on_last_brush();
+		}
+	},
+	updated_preview_mode:function() {
+		this.update_bg_layer();
+		this.update_masked_layer();
+		this.update_model_layer();
+		this.compose();
 	},
 	get_bounds:function(){
 		var c_w = this.PARAM.c_w;
@@ -795,25 +804,56 @@ var PainterZoom = {
 		}else{
 			this.$pan_tool.removeClass('chosen');
 			this.PAN_CHOSEN = false;
-			document.body.style.cursor = 'default';					
+			document.body.style.cursor = 'default';				
 		}
 	},
-	toggle_pan_tool:function() {		
-		!this.PAN_CHOSEN ? this.change_pan_mode(true): this.change_pan_mode(false);
-	},
-	toggle_preview_mode:function(){
-		if(this.PREVIEW_MODE){
-			this.PREVIEW_MODE=false;
-			this.$preview_tool.removeClass('chosen');
-			$(this).trigger("changed-preview-mode",this.PREVIEW_MODE);
-			this.change_pan_mode(false);
-		}else{
+	change_preview_mode:function(mode){
+		if(mode){
 			this.PREVIEW_MODE=true;
-			this.$preview_tool.addClass('chosen');
-			$(this).trigger("changed-preview-mode",this.PREVIEW_MODE);
-			this.change_pan_mode(true);
+			this.$preview_tool.addClass('chosen');			
+		}else{
+			this.PREVIEW_MODE=false;
+			this.$preview_tool.removeClass('chosen');						
 		};		
 	},	
+	toggle_pan_tool:function() {		
+		if(!this.PAN_CHOSEN) {
+			this.change_pan_mode(true);
+		}else{
+			this.change_pan_mode(false);			
+			this.PREVIEW_MODE && this.change_preview_mode(false);				
+		}
+	},
+	toggle_preview_mode:function() {
+		if(!this.PREVIEW_MODE) {
+			this.change_preview_mode(true);			
+			!this.PAN_CHOSEN && this.change_pan_mode(true);
+		}else{
+			this.change_preview_mode(false);
+			this.PAN_CHOSEN && this.change_pan_mode(false);			
+		}
+	},
+
+	behavior:function(){
+		
+		this.$zoom_in_tool.on("touchend, click",()=>{ this.zoom_in(); return false; });
+		this.$zoom_out_tool.on("touchend, click",()=>{ this.zoom_out(); return false; });				
+		this.$zoom.hover(() =>{ this.IS_HOVER = true;},()=> {this.IS_HOVER = false;});
+
+		this.$pan_tool.on("touchend, click", ()=>{ 			
+			this.toggle_pan_tool(); 
+			$(this).trigger("pan-mode-updated",this.PAN_CHOSEN); 
+			$(this).trigger("preview-mode-updated",this.PREVIEW_MODE);
+		});				
+		
+		this.$preview_tool.on("touchend, click",()=>{ 
+			this.toggle_preview_mode(); 
+			$(this).trigger("preview-mode-updated",this.PREVIEW_MODE);
+			$(this).trigger("pan-mode-updated",this.PAN_CHOSEN);
+		});
+		
+
+	},
 	update_status:function(){
 		this.set_status("Масштаб: "+this.SCALE+"%");
 	},
@@ -841,22 +881,7 @@ var PainterZoom = {
 		this.$preview_tool = this.$zoom.find('.painter-zoom-preview');
 		this.behavior();
 		this.update_status();
-	},		
-	behavior:function(){
-		
-		this.$zoom_in_tool.on("touchend, click",()=>{ this.zoom_in(); return false; });
-		this.$zoom_out_tool.on("touchend, click",()=>{ this.zoom_out(); return false; });				
-		this.$pan_tool.on("touchend, click", ()=>{ 			
-			this.toggle_pan_tool(); $(this).trigger("pan-mode-updated",this.PAN_CHOSEN); });		
-		this.$zoom.hover(() =>{ this.IS_HOVER = true;},()=> {this.IS_HOVER = false;});
-		this.$preview_tool.on("touchend, click",()=>{ this.toggle_preview_mode(); })
-		
-		// $(PainterBrush).on('switched-tool',(e)=>{
-		// 	console.log("switched-tool!!!")
-		// 	this.change_pan_mode(false);
-		// });
-
-	},
+	},	
 	zoom_in:function(){
 		this.SCALE +=this.STEP_SCALE;
 		this.update_status();		
