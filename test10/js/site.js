@@ -334,6 +334,7 @@ var Painter = {
 			this.ctx.drawImage(this.bg_canvas,0,0);
 			this.ctx.drawImage(this.model_canvas,0,0);
 			this.ctx.drawImage(this.user_canvas,0,0);
+			// this.ctx.drawImage(this.masked_canvas,0,0);
 		}else{
 			this.ctx.drawImage(this.bg_canvas,0,0);
 			this.ctx.drawImage(this.user_canvas,0,0);
