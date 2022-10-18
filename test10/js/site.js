@@ -37,6 +37,7 @@ var Painter = {
 
 		this.BRUSH = params.brush;
 		this.ZOOM = params.zoom;
+
 		this.models = params.models;
 		this.CANCELSYSTEM = params.cancelSystem;	
 		this.themesSystem = params.themesSystem;				
@@ -141,7 +142,11 @@ var Painter = {
 		var img = this.models.get_mask();
 		var size = this.calc_model_size(img);
 		this.masked_ctx.clearRect(0, 0,size.w,size.h);
-		this.masked_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );				
+		this.masked_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );		
+		this.masked_ctx.save();
+		this.masked_ctx.globalCompositeOperation='source-in';			
+		this.masked_ctx.drawImage(this.user_canvas, 0, 0);
+		this.masked_ctx.restore();		
 	},
 	update_model_layer:function(){	
 
@@ -279,6 +284,10 @@ var Painter = {
 			}			
 		});
 
+		// this.BRUSH = params.brush;
+		// this.ZOOM = params.zoom;
+
+		
 		$(this.CANCELSYSTEM).on('make-cancel',function(e,canvas){					
 			if(!_this.ALL_READY) return false;			
 			_this.user_ctx.clearRect(0, 0, _this.user_ctx.canvas.width, _this.user_ctx.canvas.height)
@@ -333,8 +342,7 @@ var Painter = {
 		if(this.ZOOM.is_preview_mode()){
 			this.ctx.drawImage(this.bg_canvas,0,0);
 			this.ctx.drawImage(this.model_canvas,0,0);
-			this.ctx.drawImage(this.user_canvas,0,0);
-			// this.ctx.drawImage(this.masked_canvas,0,0);
+			this.ctx.drawImage(this.masked_canvas,0,0);
 		}else{
 			this.ctx.drawImage(this.bg_canvas,0,0);
 			this.ctx.drawImage(this.user_canvas,0,0);
@@ -536,13 +544,15 @@ var PainterBrush = {
 
 		this.BRUSH_SIZE_MIN = arr_params[0];
 		this.BRUSH_SIZE_MAX = arr_params[1];				
-		this.DRAWING_MODE = true;
-		
-		this.set_status("режим рисования");
-		this.update_drawing_mode(true);
-
+						
+		// this.DRAWING_MODE = true;		
+		this.CURRENT_BRUSH_TOOL = 'brush';
+		this.LAST_BRUSH_TOOL = this.CURRENT_BRUSH_TOOL;
+			
 		this.build();			
-		this.set_current('brush');
+		this.set_current(this.CURRENT_BRUSH_TOOL);
+		this.update_drawing_mode(this.DRAWING_MODE);
+
 		this.b_size_update(50);
 
 		return this;
@@ -576,9 +586,23 @@ var PainterBrush = {
 		this.$b_sizer_header = this.$b_sizer.find('.header');
 		this.B_SIZER_TOP = this.$b_sizer.offset().top;
 		this.B_SIZER_HEIGHT = this.$b_sizer.height();
-		this.B_SIZER_HEADER_HEIGHT = this.$b_sizer_header.height();
+		this.B_SIZER_HEADER_HEIGHT = this.$b_sizer_header.height();		
+
+		this.$brushTool = this.$tools.find('.painter-tools-brush');
+		this.$eraserTool = this.$tools.find('.painter-tools-eraser');
+		
 		this.behavior();
 		this.b_size_update(0);
+	},
+	say:function(toolsName){			
+		$(this).trigger(toolsName);
+		// $(this).trigger('switched-tool');
+	},	
+	switch_on_last_brush:function(){
+		this.set_current(this.LAST_BRUSH_TOOL);
+	},
+	switch_off_all_brushes:function() {
+		this.set_current(false);
 	},	
 	b_size_update:function(pr){		
 		var topY = (this.B_SIZER_HEIGHT-this.B_SIZER_HEADER_HEIGHT)/100*pr;
@@ -587,12 +611,20 @@ var PainterBrush = {
 		this.$b_sizer_header.css({transform:"translateY("+topY+"px) scale("+scale+")"});				
 		this.BRUSH_SIZE_CURRENT = map_range((100-pr),0,100,this.BRUSH_SIZE_MIN,this.BRUSH_SIZE_MAX);		
 	},
-	set_current:function(tool_name) {
+	set_current:function(tool_name) {			
 		var $t = this.$tools.find('.painter-tools-'+ tool_name);
-		if($t.length){
+		if(tool_name && $t.length){
+			// this.say(tool_name);
+			// if(tool_name!=='brush' || tool_name!=='eraser'){ tool_name = 'brush'; };
+			var drawmode =  tool_name==='brush';
+			this.update_drawing_mode(drawmode);			
+			this.LAST_BRUSH_TOOL = this.CURRENT_BRUSH_TOOL;			
 			this.$tools.find('>div').removeClass('current');
 			$t.addClass('current');
-			this.CURRENT_TOOL = tool_name;	
+			this.CURRENT_BRUSH_TOOL = tool_name;	
+		}else{
+			this.$tools.find('>div').removeClass('current');			
+			this.CURRENT_BRUSH_TOOL = false;	
 		}
 	},
 	behavior:function() {
@@ -600,19 +632,15 @@ var PainterBrush = {
 		document.onkeydown = function(e) {			
 		  if (e.key == "x" || e.code == "KeyX") {
 		  	if(_this.get_drawing_mode()){
-				_this.update_drawing_mode(false);
 				_this.set_current('eraser');
 		  	}else{
-				_this.update_drawing_mode(true);
-				_this.set_current('brush');		  		
+				_this.set_current('brush');
 		  	}
 		  };
-		  if (e.key == "b" || e.code == "KeyB") {
-				_this.update_drawing_mode(true);
+		  if (e.key == "b" || e.code == "KeyB") {				
 				_this.set_current('brush');
 		  };		  
-		  if (e.key == "e" || e.code == "KeyE") {
-				_this.update_drawing_mode(false);
+		  if (e.key == "e" || e.code == "KeyE") {				
 				_this.set_current('eraser');
 		  };
 			// clear all
@@ -631,11 +659,11 @@ var PainterBrush = {
 		
 		this.$tools.find(all_tools).hover(()=> { this.IS_HOVER = true;},()=>{ this.IS_HOVER = false;});
 
-		this.$tools.find('.painter-tools-brush').on('touchend, click',function(){
+		this.$brushTool.on('touchend, click',function(){
 			_this.update_drawing_mode(true);
 			_this.set_current('brush');
 		});
-		this.$tools.find('.painter-tools-eraser').on('touchend, click',function(){
+		this.$eraserTool.on('touchend, click',function(){
 			_this.update_drawing_mode(false);
 			_this.set_current('eraser');
 		});	
@@ -668,11 +696,17 @@ var PainterBrush = {
 		this.$b_sizer[0].addEventListener('touchstart',(e)=>{ this.B_SIZER_HANDLED = true;foo.calc(e); });
 		this.$b_sizer[0].addEventListener('mousedown',(e)=>{ this.B_SIZER_HANDLED = true;foo.calc(e);});
 		this.$b_sizer[0].addEventListener('touchend',(e)=>{this.B_SIZER_HANDLED = false; });		
-		document.addEventListener('mouseup',(e)=>{ this.B_SIZER_HANDLED = false;});		
-		
-	},
-	say:function(msg){		
-		$(this).trigger(msg);
+		document.addEventListener('mouseup',(e)=>{ this.B_SIZER_HANDLED = false;});	
+
+
+		// $(PainterZoom).on('pan-mode-updated',(e,panIsOn)=>{ 
+		// 	if(panIsOn){
+		// 		this.switch_off_all_brushes();
+		// 	}else{
+		// 		this.switch_on_last_brush();
+		// 	} 
+		// });
+
 	},
 	is_hover:function(){		
 		return this.IS_HOVER;
@@ -742,27 +776,34 @@ var PainterZoom = {
 		return this.PREVIEW_MODE;
 	},
 	//private
-	toggle_pan_tool:function() {
-		if(!this.PAN_CHOSEN){
+	change_pan_mode(mode){
+		if(mode){
 			this.PAN_CHOSEN = true;
 			this.$pan_tool.addClass('chosen');
 			document.body.style.cursor = 'grab';
+			$(this).trigger("pan-mode-updated",this.PAN_CHOSEN);
 		}else{
 			this.$pan_tool.removeClass('chosen');
 			this.PAN_CHOSEN = false;
-			document.body.style.cursor = 'default';
+			document.body.style.cursor = 'default';			
+			$(this).trigger("pan-mode-updated",this.PAN_CHOSEN);
 		}
+	},
+	toggle_pan_tool:function() {		
+		!this.PAN_CHOSEN ? this.change_pan_mode(true): this.change_pan_mode(false);
 	},
 	toggle_preview_mode:function(){
 		if(this.PREVIEW_MODE){
 			this.PREVIEW_MODE=false;
 			this.$preview_tool.removeClass('chosen');
 			$(this).trigger("changed-preview-mode",this.PREVIEW_MODE);
+			this.change_pan_mode(false);
 		}else{
-			this.PREVIEW_MODE=true;			
+			this.PREVIEW_MODE=true;
 			this.$preview_tool.addClass('chosen');
 			$(this).trigger("changed-preview-mode",this.PREVIEW_MODE);
-		}
+			this.change_pan_mode(true);
+		};		
 	},	
 	update_status:function(){
 		this.set_status("Масштаб: "+this.SCALE+"%");
@@ -799,6 +840,11 @@ var PainterZoom = {
 		this.$pan_tool.on("touchend, click", ()=>{ this.toggle_pan_tool(); });		
 		this.$zoom.hover(() =>{ this.IS_HOVER = true;},()=> {this.IS_HOVER = false;});
 		this.$preview_tool.on("touchend, click",()=>{ this.toggle_preview_mode(); })
+		
+		// $(PainterBrush).on('switched-tool',(e)=>{
+		// 	console.log("switched-tool!!!")
+		// 	this.change_pan_mode(false);
+		// });
 
 	},
 	zoom_in:function(){
