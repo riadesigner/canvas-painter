@@ -284,10 +284,6 @@ var Painter = {
 			}			
 		});
 
-		// this.BRUSH = params.brush;
-		// this.ZOOM = params.zoom;
-
-		
 		$(this.CANCELSYSTEM).on('make-cancel',function(e,canvas){					
 			if(!_this.ALL_READY) return false;			
 			_this.user_ctx.clearRect(0, 0, _this.user_ctx.canvas.width, _this.user_ctx.canvas.height)
@@ -310,9 +306,23 @@ var Painter = {
 			this.compose();
 		});		
 
-		$(this.BRUSH).on('clearall',function(){		
-			if(!_this.ALL_READY) return false;
-			_this.clear();
+		$(this.ZOOM).on('pan-mode-updated',(e, panChosen)=>{
+			if(!this.ALL_READY) return false;
+			if(panChosen){
+				this.BRUSH.switch_off_all_brushes();
+			}else{
+				this.BRUSH.switch_on_last_brush();
+			}
+		});
+
+		$(this.BRUSH).on('current-updated',(e)=>{		
+			if(!this.ALL_READY) return false;
+			this.ZOOM.change_pan_mode(false);
+		});				
+
+		$(this.BRUSH).on('clearall',(e)=>{
+			if(!this.ALL_READY) return false;
+			this.clear();
 		});				
 
 		$(this.themesSystem).on('all-loaded',()=>{ this.is_all_ready(); });		
@@ -596,10 +606,11 @@ var PainterBrush = {
 	},
 	say:function(toolsName){			
 		$(this).trigger(toolsName);
-		// $(this).trigger('switched-tool');
+
 	},	
 	switch_on_last_brush:function(){
-		this.set_current(this.LAST_BRUSH_TOOL);
+		var last_brush = this.LAST_BRUSH_TOOL;
+		this.set_current(last_brush);
 	},
 	switch_off_all_brushes:function() {
 		this.set_current(false);
@@ -612,20 +623,23 @@ var PainterBrush = {
 		this.BRUSH_SIZE_CURRENT = map_range((100-pr),0,100,this.BRUSH_SIZE_MIN,this.BRUSH_SIZE_MAX);		
 	},
 	set_current:function(tool_name) {			
-		var $t = this.$tools.find('.painter-tools-'+ tool_name);
-		if(tool_name && $t.length){
-			// this.say(tool_name);
-			// if(tool_name!=='brush' || tool_name!=='eraser'){ tool_name = 'brush'; };
-			var drawmode =  tool_name==='brush';
-			this.update_drawing_mode(drawmode);			
-			this.LAST_BRUSH_TOOL = this.CURRENT_BRUSH_TOOL;			
-			this.$tools.find('>div').removeClass('current');
-			$t.addClass('current');
-			this.CURRENT_BRUSH_TOOL = tool_name;	
-		}else{
+		console.log('set_current',tool_name);
+		console.log('LAST_BRUSH',this.LAST_BRUSH_TOOL);
+
+		if(!tool_name){
 			this.$tools.find('>div').removeClass('current');			
 			this.CURRENT_BRUSH_TOOL = false;	
-		}
+		}else{			
+			var $t = this.$tools.find('.painter-tools-'+ tool_name);	
+			if($t.length){				
+				var drawmode =  tool_name==='brush';
+				this.update_drawing_mode(drawmode);			
+				this.LAST_BRUSH_TOOL = tool_name;			
+				this.$tools.find('>div').removeClass('current');
+				$t.addClass('current');
+				this.CURRENT_BRUSH_TOOL = tool_name;	
+			}
+		}		
 	},
 	behavior:function() {
 		var _this=this;
@@ -633,15 +647,19 @@ var PainterBrush = {
 		  if (e.key == "x" || e.code == "KeyX") {
 		  	if(_this.get_drawing_mode()){
 				_this.set_current('eraser');
+				$(_this).trigger('current-updated');
 		  	}else{
 				_this.set_current('brush');
+				$(_this).trigger('current-updated');
 		  	}
 		  };
 		  if (e.key == "b" || e.code == "KeyB") {				
 				_this.set_current('brush');
+				$(_this).trigger('current-updated');
 		  };		  
 		  if (e.key == "e" || e.code == "KeyE") {				
 				_this.set_current('eraser');
+				$(_this).trigger('current-updated');
 		  };
 			// clear all
 			if (e.key == "c" || e.code == "KeyC" || e.keyCode == 67 ) {
@@ -662,10 +680,12 @@ var PainterBrush = {
 		this.$brushTool.on('touchend, click',function(){
 			_this.update_drawing_mode(true);
 			_this.set_current('brush');
+			$(_this).trigger('current-updated');
 		});
 		this.$eraserTool.on('touchend, click',function(){
 			_this.update_drawing_mode(false);
 			_this.set_current('eraser');
+			$(_this).trigger('current-updated');
 		});	
 		this.$tools.find('.painter-tools-clearall').on('touchend, click',function(){			
 			_this.say("clearall");
@@ -697,15 +717,6 @@ var PainterBrush = {
 		this.$b_sizer[0].addEventListener('mousedown',(e)=>{ this.B_SIZER_HANDLED = true;foo.calc(e);});
 		this.$b_sizer[0].addEventListener('touchend',(e)=>{this.B_SIZER_HANDLED = false; });		
 		document.addEventListener('mouseup',(e)=>{ this.B_SIZER_HANDLED = false;});	
-
-
-		// $(PainterZoom).on('pan-mode-updated',(e,panIsOn)=>{ 
-		// 	if(panIsOn){
-		// 		this.switch_off_all_brushes();
-		// 	}else{
-		// 		this.switch_on_last_brush();
-		// 	} 
-		// });
 
 	},
 	is_hover:function(){		
@@ -780,13 +791,11 @@ var PainterZoom = {
 		if(mode){
 			this.PAN_CHOSEN = true;
 			this.$pan_tool.addClass('chosen');
-			document.body.style.cursor = 'grab';
-			$(this).trigger("pan-mode-updated",this.PAN_CHOSEN);
+			document.body.style.cursor = 'grab';			
 		}else{
 			this.$pan_tool.removeClass('chosen');
 			this.PAN_CHOSEN = false;
-			document.body.style.cursor = 'default';			
-			$(this).trigger("pan-mode-updated",this.PAN_CHOSEN);
+			document.body.style.cursor = 'default';					
 		}
 	},
 	toggle_pan_tool:function() {		
@@ -837,7 +846,8 @@ var PainterZoom = {
 		
 		this.$zoom_in_tool.on("touchend, click",()=>{ this.zoom_in(); return false; });
 		this.$zoom_out_tool.on("touchend, click",()=>{ this.zoom_out(); return false; });				
-		this.$pan_tool.on("touchend, click", ()=>{ this.toggle_pan_tool(); });		
+		this.$pan_tool.on("touchend, click", ()=>{ 			
+			this.toggle_pan_tool(); $(this).trigger("pan-mode-updated",this.PAN_CHOSEN); });		
 		this.$zoom.hover(() =>{ this.IS_HOVER = true;},()=> {this.IS_HOVER = false;});
 		this.$preview_tool.on("touchend, click",()=>{ this.toggle_preview_mode(); })
 		
