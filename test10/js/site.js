@@ -1276,20 +1276,20 @@ var ARR_THEMES = {
 			blue:"#0d4bac"
 			},
 		sets:[
-			{lines:"black", texture:0, name:'theme-green'},
-			{lines:"black", texture:1, name:'theme-sky'},
-			{lines:"black", texture:2, name:'theme-blue'},
-			{lines:"black", texture:3, name:'theme-purple'},
-			{lines:"red", texture:3, name:'theme-purple'},
-			{lines:"blue", texture:3, name:'theme-purple'},
-			{lines:"blue", texture:0, name:'theme-green'}
+			{lines:"black", texture:0, name:'theme-green-black'},
+			{lines:"black", texture:1, name:'theme-sky-black'},
+			{lines:"black", texture:2, name:'theme-blue-black'},
+			{lines:"black", texture:3, name:'theme-purple-black'},
+			{lines:"red", texture:3, name:'theme-purple-black'},
+			{lines:"blue", texture:3, name:'theme-purple-blue'},
+			{lines:"blue", texture:0, name:'theme-green-blue'}
 			]		
 		};
 
 var ARR_MODELS = [
 		{pos:0,img:"i/model-1.png",title:"тельняшка с рукавами",mask:"i/model-1-mask.png",preview:"i/model-1-preview.png"},
-		{pos:1,img:"i/model-2.png",title:"тельняшка без рукавов",mask:"i/model-1-mask.png",preview:"i/model-1-preview.png"},
-		{pos:2,img:"i/model-3.png",title:"тельняшка-платье с рукавами",mask:"i/model-1-mask.png",preview:"i/model-1-preview.png"}
+		{pos:1,img:"i/model-2.png",title:"тельняшка без рукавов",mask:"i/model-2-mask.png",preview:"i/model-2-preview.png"},
+		{pos:2,img:"i/model-3.png",title:"тельняшка-платье с рукавами",mask:"i/model-3-mask.png",preview:"i/model-2-preview.png"}
 		];
 
 	var CFG = {
