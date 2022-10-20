@@ -17,7 +17,7 @@ var Painter = {
 		// update for real bounds
 		this.PARAM.w = this.$painter.width();
 		this.PARAM.h = this.$painter.height();
-		console.log('this.PARAM',this.PARAM)
+		// console.log('this.PARAM',this.PARAM)
 
 		this.PIXEL_ASPECT = 2;
 
@@ -52,9 +52,6 @@ var Painter = {
 		 
 		this.$loader = $('#painter-loader');
 		this.loader_show();
-		setTimeout(()=>{
-			this.loader_hide();
-		},1000);
 
 		this.pre_build();		
 		this.recalc_size();
@@ -80,7 +77,7 @@ var Painter = {
 		this.NOW_LOADING = false;
 		this.$loader.removeClass('now-loading');
 		this.TMR_LOADER && clearTimeout(this.TMR_LOADER);
-		this.TMR_LOADER = setTimeout(()=>{ this.$loader.hide(); },600);
+		this.TMR_LOADER = setTimeout(()=>{ this.$loader.hide(); },300);
 	},
 	set_status:function(msg){
 		this.STATUS = msg;
@@ -218,82 +215,96 @@ var Painter = {
 			this.update_model_layer();
 			this.compose();
 			this.set_status("Все готово");
+			setTimeout(()=>{ this.loader_hide();},300);
 			return this.ALL_READY;
 		}
 	},
 	behavior:function() {
 		var _this=this;
+		
+		var foo = {
+			onmousedown:function(event) {
+				var pageX = event.touches?event.touches[0].pageX:event.pageX;
+				var pageY = event.touches?event.touches[0].pageY:event.pageY;
 
-		this.$painter[0].onmousemove = function(event){
-			if(!_this.ALL_READY) return false;
-			if(_this.DRAW_MODE){
-				var s = _this.SCALE_ASPECT;
-				var b = _this.get_bounds();
-				_this.lastX = _this.posX;
-				_this.lastY = _this.posY;
-				
-				_this.posX = (event.pageX - _this.p_offset.left - b.left) / s * _this.PIXEL_ASPECT;
-				_this.posY = (event.pageY - _this.p_offset.top - b.top) / s * _this.PIXEL_ASPECT;
+				if(!_this.ALL_READY || 
+					_this.ZOOM.is_hover() || 
+					_this.BRUSH.is_hover() ||
+					_this.CANCELSYSTEM.is_hover() ||
+					_this.themesSystem.is_hover() ||
+					_this.models.is_hover() ) return false;
 
-				_this.draw();
-				_this.compose();
-			};
-			if(_this.PAN_MODE){
-				var x = event.pageX - _this.pan_coord.deltaX;
-				var y = event.pageY - _this.pan_coord.deltaY;
-				_this.world_coord = [x,y];
-				_this.canvas_update_pos();				
-			}
-		};	
+				if(_this.SPACEBAR_PRESSED || _this.ZOOM.pan_chosen() ){
+					// PAN
+					_this.DRAW_MODE = false;
+					_this.PAN_MODE = true;
+					_this.pan_coord = {
+						deltaX:pageX - _this.world_coord[0],
+						deltaY:pageY - _this.world_coord[1]
+					};
+				}else{
+					// DRAWING
+					var s = _this.SCALE_ASPECT;
+					var b = _this.get_bounds();
 
-		this.$painter[0].onmousedown = function(event){	
-			
-			if(!_this.ALL_READY || 
-				_this.ZOOM.is_hover() || 
-				_this.BRUSH.is_hover() ||
-				_this.CANCELSYSTEM.is_hover() ||
-				_this.themesSystem.is_hover() ||
-				_this.models.is_hover() ) return false;
-
-			if(_this.SPACEBAR_PRESSED || _this.ZOOM.pan_chosen() ){
-				// PAN
-				_this.DRAW_MODE = false;
-				_this.PAN_MODE = true;
-				_this.pan_coord = {
-					deltaX:event.pageX - _this.world_coord[0],
-					deltaY:event.pageY - _this.world_coord[1]
-				};
-			}else{
-				// DRAWING
-				var s = _this.SCALE_ASPECT;
-				var b = _this.get_bounds();
-
-				_this.posX = (event.pageX - _this.p_offset.left - b.left) / s * _this.PIXEL_ASPECT;
-				_this.posY = (event.pageY - _this.p_offset.top - b.top) / s * _this.PIXEL_ASPECT;
+					_this.posX = (pageX - _this.p_offset.left - b.left) / s * _this.PIXEL_ASPECT;
+					_this.posY = (pageY - _this.p_offset.top - b.top) / s * _this.PIXEL_ASPECT;
 
 
-				if(_this.hit_the_canvas()){
-					_this.PAN_MODE = false;
-					_this.DRAW_MODE = true;
+					if(_this.hit_the_canvas()){
+						_this.PAN_MODE = false;
+						_this.DRAW_MODE = true;
+						_this.lastX = _this.posX;
+						_this.lastY = _this.posY;
+						_this.NEED_TO_SNAPSHOT = true;
+						_this.draw_start_cap();	
+						_this.compose();					
+					}
+				}				
+			},
+			onmousemove:function(event) {
+				if(!_this.ALL_READY) return false;
+
+				var pageX = event.touches?event.touches[0].pageX:event.pageX;
+				var pageY = event.touches?event.touches[0].pageY:event.pageY;				
+
+				if(_this.DRAW_MODE){
+					var s = _this.SCALE_ASPECT;
+					var b = _this.get_bounds();
 					_this.lastX = _this.posX;
 					_this.lastY = _this.posY;
-					_this.NEED_TO_SNAPSHOT = true;
-					_this.draw_start_cap();	
-					_this.compose();					
+					
+					_this.posX = (pageX - _this.p_offset.left - b.left) / s * _this.PIXEL_ASPECT;
+					_this.posY = (pageY - _this.p_offset.top - b.top) / s * _this.PIXEL_ASPECT;
+
+					_this.draw();
+					_this.compose();
+				};
+				if(_this.PAN_MODE){
+					var x = pageX - _this.pan_coord.deltaX;
+					var y = pageY - _this.pan_coord.deltaY;
+					_this.world_coord = [x,y];
+					_this.canvas_update_pos();				
 				}
-			}
-
+			},
+			onmouseup:function(event) {
+				if(!_this.ALL_READY) return false;
+				_this.ending_draw();
+			},
+			onmouseleave:function() {
+				if(!_this.ALL_READY) return false;
+				_this.ending_draw();
+			}			
 		};
 
-		this.$painter[0].onmouseup = function(event){
-			if(!_this.ALL_READY) return false;
-			_this.ending_draw();
-		};				
+		this.$painter[0].ontouchstart = function(event){  foo.onmousedown(event);};
+		this.$painter[0].ontouchmove = function(event){ foo.onmousemove(event);};
+		this.$painter[0].ontouchend = function(event){  foo.onmouseup(event);};
 
-		this.$painter[0].onmouseleave = function(event){
-			if(!_this.ALL_READY) return false;
-			_this.ending_draw();
-		};
+		this.$painter[0].onmousemove = function(event){ foo.onmousemove(event);};	
+		this.$painter[0].onmousedown = function(event){ foo.onmousedown(event);};
+		this.$painter[0].onmouseup = function(event){ foo.onmouseup(event); };				
+		this.$painter[0].onmouseleave = function(event){ foo.onmouseleave(event); };
 		
 		document.addEventListener('keydown',function(e){	
 			if(!_this.ALL_READY) return false;
@@ -352,11 +363,7 @@ var Painter = {
 		$(this.themesSystem).on('all-loaded',()=>{ this.is_all_ready(); });		
 		$(this.models).on('all-loaded',()=> { this.is_all_ready(); });			
 		$(this.themesSystem).on('onchanged',(index)=>{ this.theme_changed(index);});		
-
-		$(this.models).on('onchanged',()=>{
-			this.update_model_layer();
-			this.compose();
-		});				
+		$(this.models).on('onchanged',()=>{ this.update_model_layer(); this.compose(); });
 
 	},
 	theme_changed:function(index){
