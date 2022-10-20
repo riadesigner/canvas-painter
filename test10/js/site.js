@@ -46,6 +46,15 @@ var Painter = {
 		this.SCALE_ASPECT = init_scale;
 
 		this.ALL_READY = false;
+		this.LOADING_MESSAGES = {};
+		this.LOADING_MESSAGES.painter = "Загрузка...";
+
+		 
+		this.$loader = $('#painter-loader');
+		this.loader_show();
+		setTimeout(()=>{
+			this.loader_hide();
+		},1000);
 
 		this.pre_build();		
 		this.recalc_size();
@@ -53,6 +62,26 @@ var Painter = {
 		// this.textures_preload();
 
 	},	
+	loader_show:function() {
+		this.NOW_LOADING = true;
+		
+		this.$loader.show();
+		this.TMR_LOADER && clearTimeout(this.TMR_LOADER);
+		this.TMR_LOADER = setTimeout(()=>{ this.$loader.addClass('now-loading'); },0);
+		
+		var str = "";
+		for (var i in this.LOADING_MESSAGES){
+			str += "<p>"+this.LOADING_MESSAGES[i]+"</p>";
+		};
+		this.$loader.find(".message").html(str);
+
+	},
+	loader_hide:function() {	
+		this.NOW_LOADING = false;
+		this.$loader.removeClass('now-loading');
+		this.TMR_LOADER && clearTimeout(this.TMR_LOADER);
+		this.TMR_LOADER = setTimeout(()=>{ this.$loader.hide(); },600);
+	},
 	set_status:function(msg){
 		this.STATUS = msg;
 		$(this).trigger('status-updated');
@@ -1240,11 +1269,11 @@ var PainterModel = {
 						_this.ARR_PREVIEW_LOADED.push(this);
 						_this.preload();
 					};			
-					preview.src = data.preview;
+					preview.src = data.preview.black; // loading black image
 				};			
-				mask.src = data.mask;					
+				mask.src = data.mask; // loading mask image
 			};			
-			img.src = data.img;
+			img.src = data.img; // loading model image
 
 		}else{
 			_this.set_all_loaded();	
@@ -1287,9 +1316,9 @@ var ARR_THEMES = {
 		};
 
 var ARR_MODELS = [
-		{pos:0,img:"i/model-1.png",title:"тельняшка с рукавами",mask:"i/model-1-mask.png",preview:"i/model-1-preview.png"},
-		{pos:1,img:"i/model-2.png",title:"тельняшка без рукавов",mask:"i/model-2-mask.png",preview:"i/model-2-preview.png"},
-		{pos:2,img:"i/model-3.png",title:"тельняшка-платье с рукавами",mask:"i/model-3-mask.png",preview:"i/model-2-preview.png"}
+		{pos:0,img:"i/model-1.png",title:"тельняшка с рукавами",mask:"i/model-1-mask.png",preview:{black:"i/model-1-black.png",blue:"i/model-1-blue.png",black:"i/model-1-red.png"}},
+		{pos:1,img:"i/model-2.png",title:"тельняшка без рукавов",mask:"i/model-2-mask.png",preview:{black:"i/model-2-black.png",blue:"i/model-2-blue.png",black:"i/model-2-red.png"}},
+		{pos:2,img:"i/model-3.png",title:"тельняшка-платье с рукавами",mask:"i/model-3-mask.png",preview:{black:"i/model-3-black.png",blue:"i/model-3-blue.png",black:"i/model-3-red.png"}}
 		];
 
 	var CFG = {
