@@ -406,7 +406,7 @@ var Painter = {
 					this.update_texture_layer();
 					this.update_user_layer();
 					this.update_masked_layer();
-					//this.update_model_layer();
+					this.update_model_layer();
 					this.compose();
 
 				}else{
@@ -418,6 +418,7 @@ var Painter = {
 		};
 		
 		var set = this.themesSystem.get();
+		this.models.set_current_lines(set.lines);
 
 		if(this.models.is_theme_loaded(set)){
 			foo.change_theme();
@@ -1265,6 +1266,7 @@ var PainterModel = {
 		this.ARR_PREVIEW_LOADED = {black:[],blue:[],red:[]};
 		this.ALL_READY = false;		
 		this.CURRENT = 0;
+		this.CURRENT_LINES = "black";
 		this.set_status("Загрузка моделей ...");
 		this.preload();
 		// this.behavior();
@@ -1327,6 +1329,9 @@ var PainterModel = {
 		foo.load_image();
 
 	},
+	set_current_lines:function(lines) {
+		this.CURRENT_LINES = lines;
+	},
 	set_all_loaded:function() {
 		this.ALL_READY = true;		
 		this.build();		
@@ -1350,9 +1355,8 @@ var PainterModel = {
 	get_mask:function() {			
 		return this.ARR_MASK_LOADED[this.CURRENT];
 	},		
-	get_preview:function() {	
-		var lines = "black"; 	
-		return this.ARR_PREVIEW_LOADED[lines][this.CURRENT];
+	get_preview:function() {		
+		return this.ARR_PREVIEW_LOADED[this.CURRENT_LINES][this.CURRENT];
 	},			
 	get_status:function() {
 		return this.STATUS;
