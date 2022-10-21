@@ -329,7 +329,9 @@ var Painter = {
 			if(!_this.ALL_READY) return false;			
 			_this.user_ctx.clearRect(0, 0, _this.user_ctx.canvas.width, _this.user_ctx.canvas.height)
 			_this.user_ctx.drawImage(canvas,0,0);
-			_this.compose();			
+			_this.compose();		
+			_this.ZOOM.change_preview_mode(false);
+			_this.updated_preview_mode();
 		});
 
 		$(this.ZOOM).on('scale-updated',function(){		
@@ -348,16 +350,39 @@ var Painter = {
 			this.updated_preview_mode();
 		});			
 
+//xxxx
 		$(this.BRUSH).on('current-updated',(e)=>{		
 			if(!this.ALL_READY) return false;
 			this.ZOOM.change_pan_mode(false);
+			this.updated_pan_mode(false);
 			this.ZOOM.change_preview_mode(false);
 			this.updated_preview_mode();
 		});				
+
+		$(this.BRUSH).on('brushsize-updated',(e)=>{
+			if(!this.ALL_READY) return false;
+			this.ZOOM.change_pan_mode(false);			
+			this.updated_pan_mode(false);
+			this.ZOOM.change_preview_mode(false);
+			this.updated_preview_mode();
+		});
+
 		$(this.BRUSH).on('clearall',(e)=>{
 			if(!this.ALL_READY) return false;
 			this.clear();
-		});				
+			this.ZOOM.change_pan_mode(false);
+			this.updated_pan_mode(false);
+			this.ZOOM.change_preview_mode(false);
+			this.updated_preview_mode();			
+		});
+		$(this.BRUSH).on('newdoc',(e)=>{
+			if(!this.ALL_READY) return false;
+			this.clear();
+			this.ZOOM.change_pan_mode(false);
+			this.updated_pan_mode(false);
+			this.ZOOM.change_preview_mode(false);
+			this.updated_preview_mode();			
+		});		
 
 		$(this.themesSystem).on('all-loaded',()=>{ this.is_all_ready(); });		
 		$(this.models).on('all-loaded',()=> { this.is_all_ready(); });			
@@ -666,6 +691,8 @@ var PainterBrush = {
 
 		this.$brushTool = this.$tools.find('.painter-tools-brush');
 		this.$eraserTool = this.$tools.find('.painter-tools-eraser');
+		this.$newdocTool = this.$tools.find('.painter-tools-newdoc');
+		this.$clearallTool = this.$tools.find('.painter-tools-clearall');
 		
 		this.behavior();
 		this.b_size_update(0);
@@ -753,11 +780,15 @@ var PainterBrush = {
 			_this.set_current('eraser');
 			$(_this).trigger('current-updated');
 		});	
-		this.$tools.find('.painter-tools-clearall').on('touchend, click',function(){			
+
+
+		this.$clearallTool.on('touchend, click',function(){						
 			_this.say("clearall");
+			_this.set_current('brush');
 		});
-		this.$tools.find('.painter-tools-newdoc').on('touchend, click',function(){			
+		this.$newdocTool.on('touchend, click',function(){			
 			_this.say("newdoc");
+			_this.set_current('brush');
 		});			
 		
 		var foo = {
@@ -779,8 +810,8 @@ var PainterBrush = {
 		};
 		this.$b_sizer[0].addEventListener('mousemove',(e)=> {foo.calc(e);});
 		this.$b_sizer[0].addEventListener('touchmove',(e)=> {foo.calc(e);});
-		this.$b_sizer[0].addEventListener('touchstart',(e)=>{ this.B_SIZER_HANDLED = true;foo.calc(e); });
-		this.$b_sizer[0].addEventListener('mousedown',(e)=>{ this.B_SIZER_HANDLED = true;foo.calc(e);});
+		this.$b_sizer[0].addEventListener('touchstart',(e)=>{ this.B_SIZER_HANDLED = true;foo.calc(e);  this.say("brushsize-updated"); });
+		this.$b_sizer[0].addEventListener('mousedown',(e)=>{ this.B_SIZER_HANDLED = true;foo.calc(e); this.say("brushsize-updated"); });
 		this.$b_sizer[0].addEventListener('touchend',(e)=>{this.B_SIZER_HANDLED = false; });		
 		document.addEventListener('mouseup',(e)=>{ this.B_SIZER_HANDLED = false;});	
 
