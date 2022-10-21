@@ -1275,18 +1275,6 @@ var PainterModel = {
 		var loaded = this.ARR_PREVIEW_LOADED[lines].length;
 		return loaded;
 	},
-	load_theme:function(set,opt) {
-		var lines = set.lines;
-		var loaded = this.ARR_PREVIEW_LOADED[lines].length;
-		if(loaded){
-			opt.onReady && opt.onReady();	
-		}else{
-			setTimeout(function(){				
-				opt.onReady && opt.onReady();	
-			},1000);
-		}
-		
-	},
 	is_ready:function() {
 		return this.ALL_READY;
 	},
@@ -1301,6 +1289,43 @@ var PainterModel = {
 			});
 		});
 		this.$modelTools.hover(()=>{this.IS_HOVER=true;},()=>{this.IS_HOVER=false;});
+	},
+	load_theme:function(set,opt) {
+		var _this=this;
+
+		var lines = set.lines;
+		var loaded = this.ARR_PREVIEW_LOADED[lines].length;
+		
+		if(loaded){
+			opt.onReady && opt.onReady();	
+			return;
+		};		
+
+		var arr_src = [];
+		
+		for(var i in this.ARR){				
+			var src  = this.ARR[i].preview[lines];
+			arr_src.push(src);  
+		};		
+
+		var foo = {
+			load_image:function() {
+				var src = arr_src.shift();
+				if(src){
+					var img = new Image();
+					img.onload = function() {
+						_this.ARR_PREVIEW_LOADED[lines].push(this);										
+						foo.load_image();
+					};
+					img.src = src;					
+				}else{									
+					opt.onReady && opt.onReady();	
+				}
+			}
+		};
+
+		foo.load_image();
+
 	},
 	set_all_loaded:function() {
 		this.ALL_READY = true;		
@@ -1343,7 +1368,7 @@ var PainterModel = {
 			for(var i in this.ARR){
 				this.NEED_TO_LOAD.push(this.ARR[i]);
 			}
-		};		
+		};
 		var data = this.NEED_TO_LOAD.shift();
 		if(data){
 			
