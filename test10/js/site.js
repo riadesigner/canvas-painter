@@ -161,12 +161,11 @@ var Painter = {
 	update_texture_layer:function(){
 		var w = this.$canvas[0].width;
 		var h = this.$canvas[0].height;		
-		var img = this.themesSystem.get_image();
-		console.log('img',img)
+		var img = this.themesSystem.get_image();		
 		this.brush_texture_ctx.drawImage(img,0,0,img.width,img.height,0,0,w,h);
 	},
 	update_masked_layer:function(){
-		var img = this.models.get_mask();
+		var img = this.models.get_mask();		
 		var size = this.calc_model_size(img);
 		this.masked_ctx.clearRect(0, 0,size.w,size.h);
 		this.masked_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );		
@@ -386,11 +385,21 @@ var Painter = {
 
 		$(this.themesSystem).on('all-loaded',()=>{ this.is_all_ready(); });		
 		$(this.models).on('all-loaded',()=> { this.is_all_ready(); });			
-		$(this.themesSystem).on('onchanged',(index)=>{ this.theme_changed(index);});		
-		$(this.models).on('onchanged',()=>{ this.update_model_layer(); this.compose(); });
+		$(this.themesSystem).on('theme-changed',(index)=>{ this.theme_changed(index);});		
+		$(this.models).on('onchanged',(index)=>{ this.model_changed(index); });
 
 	},
+	model_changed:function(index){
+		this.update_masked_layer();
+		this.update_model_layer(); 
+		this.compose();
+	},
 	theme_changed:function(index){
+		//xxx
+		var SET = this.themesSystem.get();
+		var ready = this.models.is_ready_for(SET);
+
+		console.log('SET',SET);
 										
 			if(this.ZOOM.is_preview_mode()){
 			
@@ -716,8 +725,7 @@ var PainterBrush = {
 		this.BRUSH_SIZE_CURRENT = map_range((100-pr),0,100,this.BRUSH_SIZE_MIN,this.BRUSH_SIZE_MAX);		
 	},
 	set_current:function(tool_name) {			
-		console.log('set_current',tool_name);
-		console.log('LAST_BRUSH',this.LAST_BRUSH_TOOL);
+
 
 		if(!tool_name){
 			this.$tools.find('>div').removeClass('current');			
@@ -1006,6 +1014,9 @@ var PainterThemes = {
 		return this;
 	},
 	//public
+	get:function() {
+		return this.SETS[this.CURRENT];
+	},
 	get_status:function(){
 		return this.STATUS;
 	},
@@ -1095,7 +1106,7 @@ var PainterThemes = {
 		this.$themesTool.find('li').each(function(index){
 			$(this).on("touchend, click",(e)=>{
 				_this.set_current(index);	
-				$(_this).trigger('onchanged',index);
+				$(_this).trigger('theme-changed',index);
 			});
 		});
 	}
@@ -1235,13 +1246,20 @@ var PainterModel = {
 		this.ARR = arr_models || [];
 		this.ARR_IMAGE_LOADED = [];
 		this.ARR_MASK_LOADED = [];
-		this.ARR_PREVIEW_LOADED = [];
+		this.ARR_PREVIEW_LOADED = {black:[],blue:[],red:[]};
+		// this.ARR_PREVIEW_BLACK_LOADED = [];
+		// this.ARR_PREVIEW_BLUE_LOADED = [];
+		// this.ARR_PREVIEW_RED_LOADED = [];
 		this.ALL_READY = false;		
 		this.CURRENT = 0;
 		this.set_status("Загрузка моделей ...");
 		this.preload();
 		// this.behavior();
 		return this;
+	},
+	is_ready_for:function(set) {
+		var lines = set.lines;
+		return true;
 	},
 	is_ready:function() {
 		return this.ALL_READY;
@@ -1278,11 +1296,12 @@ var PainterModel = {
 	get_image:function() {		
 		return this.ARR_IMAGE_LOADED[this.CURRENT];
 	},	
-	get_mask:function() {		
+	get_mask:function() {			
 		return this.ARR_MASK_LOADED[this.CURRENT];
 	},		
-	get_preview:function() {		
-		return this.ARR_PREVIEW_LOADED[this.CURRENT];
+	get_preview:function() {	
+		var lines = "black"; 	
+		return this.ARR_PREVIEW_LOADED[lines][this.CURRENT];
 	},			
 	get_status:function() {
 		return this.STATUS;
@@ -1312,9 +1331,10 @@ var PainterModel = {
 					//
 					var preview = new Image();
 					preview.onload = function() {
-						_this.ARR_PREVIEW_LOADED.push(this);
+						//xxx
+						_this.ARR_PREVIEW_LOADED['black'].push(this);
 						_this.preload();
-					};			
+					};					
 					preview.src = data.preview.black; // loading black image
 				};			
 				mask.src = data.mask; // loading mask image
@@ -1326,7 +1346,7 @@ var PainterModel = {
 		}
 	},
 	set_current:function(index) {		
-		this.CURRENT = index;
+		this.CURRENT = index;		
 		this.$modelTools && this.$modelTools.find('>div').removeClass('current').eq(index).addClass('current');
 		$(this).trigger('onchanged');
 	}
@@ -1340,10 +1360,10 @@ $(function(){
 
 var ARR_THEMES = {
 		textures:[
-			{img:"img/green.jpg",color:"#04a098"},
-			{img:"img/sky.jpg",color:"#418dcc"},
-			{img:"img/blue.jpg",color:"#0d4bac"},
-			{img:"img/purple.jpg",color:"#8E6386"}
+			{img:"textures/green.jpg",color:"#04a098"},
+			{img:"textures/sky.jpg",color:"#418dcc"},
+			{img:"textures/blue.jpg",color:"#0d4bac"},
+			{img:"textures/purple.jpg",color:"#8E6386"}
 			],
 		lines:{
 			black:"#000000",
@@ -1362,9 +1382,30 @@ var ARR_THEMES = {
 		};
 
 var ARR_MODELS = [
-		{pos:0,img:"i/model-1.png",title:"тельняшка с рукавами",mask:"i/model-1-mask.png",preview:{black:"i/model-1-black.png",blue:"i/model-1-blue.png",black:"i/model-1-red.png"}},
-		{pos:1,img:"i/model-2.png",title:"тельняшка без рукавов",mask:"i/model-2-mask.png",preview:{black:"i/model-2-black.png",blue:"i/model-2-blue.png",black:"i/model-2-red.png"}},
-		{pos:2,img:"i/model-3.png",title:"тельняшка-платье с рукавами",mask:"i/model-3-mask.png",preview:{black:"i/model-3-black.png",blue:"i/model-3-blue.png",black:"i/model-3-red.png"}}
+		{pos:0,
+			img:"models/model-1.png",
+			title:"тельняшка с рукавами",
+			mask:"models/model-1-mask.png",
+			preview:{
+				black:"models/model-1-black.png",
+				blue:"models/model-1-blue.png",
+				red:"models/model-1-red.png"}},
+		{pos:1,
+			img:"models/model-2.png",
+			title:"тельняшка без рукавов",
+			mask:"models/model-2-mask.png",
+			preview:{
+				black:"models/model-2-black.png",
+				blue:"models/model-2-blue.png",
+				red:"models/model-2-red.png"}},
+		{pos:2,
+			img:"models/model-3.png",
+			title:"тельняшка-платье с рукавами",
+			mask:"models/model-3-mask.png",
+			preview:{
+				black:"models/model-3-black.png",
+				blue:"models/model-3-blue.png",
+				red:"models/model-3-red.png"}}
 		];
 
 	var CFG = {
