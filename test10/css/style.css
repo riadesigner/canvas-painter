@@ -58,10 +58,16 @@ align-items: center;
 .annotation span{color:white;}
 
 #painter{ position: relative;width: 100%;height: 100%;overflow:hidden; background: #333333;}
-#painter.theme-green{background: #377C8E;}
-#painter.theme-sky{background: skyblue;}
-#painter.theme-blue{background: darkslateblue;}
-#painter.theme-purple{background: purple;}
+
+.theme-green-black #painter{background: #377C8E;}
+.theme-sky-black #painter{background: skyblue;}
+.theme-blue-black #painter{background: darkslateblue;}
+.theme-purple-black #painter{background: purple;}
+.theme-purple-red #painter{background: purple;}
+.theme-purple-blue #painter{background: purple;}
+.theme-green-blue #painter{background: #377C8E;}
+	
+
 
 #painter-loader{position: absolute;width: 100%;height: 100%;background: #26262677;top:0;left: 0;}
 #painter-loader .content{

@@ -325,12 +325,11 @@ var Painter = {
 			}			
 		});
 
-		$(this.CANCELSYSTEM).on('make-cancel',function(e,canvas){					
+		$(this.CANCELSYSTEM).on('make-cancel',function(e,canvas){		
 			if(!_this.ALL_READY) return false;			
 			_this.user_ctx.clearRect(0, 0, _this.user_ctx.canvas.width, _this.user_ctx.canvas.height)
 			_this.user_ctx.drawImage(canvas,0,0);
-			_this.compose();
-			console.log("make cancel!!!!")
+			_this.compose();			
 		});
 
 		$(this.ZOOM).on('scale-updated',function(){		
@@ -956,6 +955,8 @@ var PainterThemes = {
 	init:function(painter_id,themes){		
 		
 		this.$parent = $('#'+painter_id);				
+		this.$body = $('body');
+
 		this.STATUS = "";
 		this.IS_READY = false;
 
@@ -964,6 +965,7 @@ var PainterThemes = {
 		this.SETS = this.THEMES.sets;
 		this.LINES = this.THEMES.lines;		
 		this.NAMES = this.get_all_names();		
+		
 
 		this.ARR_TEXTURES_LOADED = [];
 		this.build();		
@@ -1026,9 +1028,11 @@ var PainterThemes = {
 	set_current:function(index) {
 		var _this=this;
 		this.CURRENT = index;
-		var msg = 'Тема:'+ index;		
-		$.each(this.NAMES,function(i) { _this.$parent.removeClass(_this.NAMES[i]); });
-		this.$parent.addClass(this.NAMES[index]);
+		var msg = 'Тема:'+ index;
+
+		$.each(this.NAMES,function(i) { _this.$body.removeClass(_this.NAMES[i]); });
+		this.$body.addClass(this.NAMES[index]);
+
 		this.$parent.find('li').removeClass('current').eq(index).addClass('current');
 		this.set_status(msg);
 	},
@@ -1105,32 +1109,36 @@ var PainterCancelSystem = {
 	},	
 	make_cancel:function() {
 		if(this.ARR_SNAPSHOTS[this.CURRENT-1]){			
-			this.CURRENT--;
-			var canvas = this.ARR_SNAPSHOTS[this.CURRENT];		
-			this.update_status();
-			$(this).trigger('make-cancel',canvas);			
+			this.CURRENT--;			
+			this.update_status();	
 		}
 	},
 	make_restore:function() {
 		if(this.CURRENT>-1 && this.ARR_SNAPSHOTS[this.CURRENT+1]){
 			this.CURRENT++;
-			var canvas = this.ARR_SNAPSHOTS[this.CURRENT];			
-			$(this).trigger('make-cancel',canvas);
 			this.update_status();
 		}
 	},
 	behavior:function() {
 		var _this=this;
 		
+		var foo = {
+			say_make_cancel:()=>{
+				var canvas = this.ARR_SNAPSHOTS[this.CURRENT];
+				$(this).trigger('make-cancel',canvas);
+			}
+		};
+
 		document.addEventListener('keydown',(e)=>{			
 		  if(e.key === 'z' && (e.ctrlKey || e.metaKey) ){ 		  	
-		  	_this.make_cancel();
+		  	this.make_cancel();
+		  	foo.say_make_cancel();
 		  }
 		});
 
 		this.$btns.hover((e)=>{this.IS_HOVER = true;},(e)=>{this.IS_HOVER = false;});
-		this.$btnBack.on('touchend, click',(e)=> {this.make_cancel();});
-		this.$btnForw.on('touchend, click',(e)=> {this.make_restore();});
+		this.$btnBack.on('touchend, click',(e)=> {this.make_cancel(); foo.say_make_cancel();});
+		this.$btnForw.on('touchend, click',(e)=> {this.make_restore(); foo.say_make_cancel();});
 		
 	},
 	is_hover:function() {
@@ -1316,7 +1324,7 @@ var ARR_THEMES = {
 			{lines:"black", texture:1, name:'theme-sky-black'},
 			{lines:"black", texture:2, name:'theme-blue-black'},
 			{lines:"black", texture:3, name:'theme-purple-black'},
-			{lines:"red", texture:3, name:'theme-purple-black'},
+			{lines:"red", texture:3, name:'theme-purple-red'},
 			{lines:"blue", texture:3, name:'theme-purple-blue'},
 			{lines:"blue", texture:0, name:'theme-green-blue'}
 			]		
