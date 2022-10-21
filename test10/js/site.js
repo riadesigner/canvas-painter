@@ -396,26 +396,42 @@ var Painter = {
 	},
 	theme_changed:function(index){
 		//xxx
-		var SET = this.themesSystem.get();
-		var ready = this.models.is_ready_for(SET);
+		var _this =this;
+		var foo = {
+			change_theme:()=>{
+				if(this.ZOOM.is_preview_mode()){
+				
+					console.log("!! need change theme")	
+					// this.update_bg_layer();
+					this.update_texture_layer();
+					this.update_user_layer();
+					this.update_masked_layer();
+					//this.update_model_layer();
+					this.compose();
 
-		console.log('SET',SET);
-										
-			if(this.ZOOM.is_preview_mode()){
-			
-				console.log("!! need change theme")	
-				// this.update_bg_layer();
-				this.update_texture_layer();
-				this.update_user_layer();
-				this.update_masked_layer();
-				//this.update_model_layer();
-				this.compose();
-
-			}else{
-				this.update_texture_layer();
-				this.update_user_layer();
-				this.compose();			
+				}else{
+					this.update_texture_layer();
+					this.update_user_layer();
+					this.compose();			
+				}				
 			}
+		};
+		
+		var set = this.themesSystem.get();
+
+		if(this.models.is_theme_loaded(set)){
+			foo.change_theme();
+		}else{
+			this.loader_show();
+			this.models.load_theme(set,{
+				onReady:function() {
+					_this.loader_hide();
+					foo.change_theme();
+				}
+			});
+		}
+
+
 	},
 	compose:function(){		
 		if(this.ZOOM.is_preview_mode()){
@@ -1247,9 +1263,6 @@ var PainterModel = {
 		this.ARR_IMAGE_LOADED = [];
 		this.ARR_MASK_LOADED = [];
 		this.ARR_PREVIEW_LOADED = {black:[],blue:[],red:[]};
-		// this.ARR_PREVIEW_BLACK_LOADED = [];
-		// this.ARR_PREVIEW_BLUE_LOADED = [];
-		// this.ARR_PREVIEW_RED_LOADED = [];
 		this.ALL_READY = false;		
 		this.CURRENT = 0;
 		this.set_status("Загрузка моделей ...");
@@ -1257,9 +1270,22 @@ var PainterModel = {
 		// this.behavior();
 		return this;
 	},
-	is_ready_for:function(set) {
+	is_theme_loaded:function(set) {
 		var lines = set.lines;
-		return true;
+		var loaded = this.ARR_PREVIEW_LOADED[lines].length;
+		return loaded;
+	},
+	load_theme:function(set,opt) {
+		var lines = set.lines;
+		var loaded = this.ARR_PREVIEW_LOADED[lines].length;
+		if(loaded){
+			opt.onReady && opt.onReady();	
+		}else{
+			setTimeout(function(){				
+				opt.onReady && opt.onReady();	
+			},1000);
+		}
+		
 	},
 	is_ready:function() {
 		return this.ALL_READY;
