@@ -1408,6 +1408,40 @@ var PainterModel = {
 
 };
 
+var PainterSave = {
+	init:function(painter_id,params){
+		this.$painter = $('#'+painter_id);
+		this.params = params;
+		this.build();
+	},
+	build:function(){
+		this.$btnSave = $('<div id="painter-button-save" class="noselect">Сохранить</div>');
+		var winSaveContent = [
+			'<div class="painter-win-content noselect">',			
+			'<div class="painter-win-content_title">Выберите действие:</div>',
+				'<div class="buttons">',
+					'<div class="painter-win-content_btn">Сохранить эскиз к себе на компьютер</div>',
+					'<div class="painter-win-content_btn">Сохранить эскиз и отправить заказ</div>',			
+				'</div>',
+				'<div class="painter-win-btn-close"><span></span><span></span></div>',
+			'</div>'
+			].join('');
+		this.$saveWin = $('<div id="painter-save-win">'+winSaveContent+'</div>');
+		this.$painter.append(this.$btnSave);
+		this.$painter.append(this.$saveWin);		
+		this.behavior();
+	},
+	behavior:function(){
+		this.$btnSave.on("touchend, click",(e)=>{ this.open_save_win();})
+	},
+	open_save_win:function(){
+
+	},
+	close_save_win:function(){
+
+	}
+};
+
 
 $(function(){	
 
@@ -1469,7 +1503,8 @@ var ARR_MODELS = [
 		brush_params:[5,60],
 		max_cancel_steps:5,
 		themes:ARR_THEMES,
-		models:ARR_MODELS		
+		models:ARR_MODELS,
+		save_params:{email:'e.pogrebnyak@mail.ru'}		
 	};
 
 
@@ -1481,12 +1516,14 @@ var ARR_MODELS = [
 		themesSystem:PainterThemes,
 		statusbar:PainterStatusbar,
 		init_scale:CFG.init_scale,		
+		saveSystem:PainterSave,
 		onready:function(){
 			this.models.init('painter',CFG.models);
 			this.brush.init('painter',CFG.brush_params);
 			this.zoom.init('painter',CFG.init_scale);
 			this.cancelSystem.init('painter',CFG.max_cancel_steps);
 			this.themesSystem.init('painter',CFG.themes);			
+			this.saveSystem.init('painter',CFG.save_params);
 			this.statusbar.init('painter',[
 				Painter,this.models,this.zoom,this.themesSystem]);
 		}
