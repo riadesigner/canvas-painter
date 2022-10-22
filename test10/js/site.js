@@ -24,7 +24,7 @@ var Painter = {
 		this.DRAW_MODE = false;
 		this.PAN_MODE = false;
 		this.SPACEBAR_PRESSED = false;
-		this.PREVIEW_MODE = false;
+		this.PREVIEW_MODE = false;		
 
 		this.world_coord = [0,0];
 		this.p_offset = {top:0,left:0};
@@ -41,6 +41,7 @@ var Painter = {
 		this.models = params.models;
 		this.CANCELSYSTEM = params.cancelSystem;	
 		this.themesSystem = params.themesSystem;				
+		this.saveSystem = params.saveSystem;
 
 		var init_scale = this.PARAM.init_scale?this.PARAM.init_scale:1;		
 		this.SCALE_ASPECT = init_scale;
@@ -59,6 +60,7 @@ var Painter = {
 		// this.textures_preload();
 
 	},	
+
 	loader_show:function() {
 		this.NOW_LOADING = true;
 		
@@ -231,7 +233,9 @@ var Painter = {
 					_this.BRUSH.is_hover() ||
 					_this.CANCELSYSTEM.is_hover() ||
 					_this.themesSystem.is_hover() ||
-					_this.models.is_hover() ) return false;
+					_this.models.is_hover() ||
+					_this.saveSystem.is_opened() ||
+					_this.saveSystem.is_hover() ) return false;
 
 				if(_this.SPACEBAR_PRESSED || _this.ZOOM.pan_chosen() ){
 					// PAN
@@ -347,9 +351,8 @@ var Painter = {
 		$(this.ZOOM).on('preview-mode-updated',(e, previewMode)=>{
 			if(!this.ALL_READY) return false;
 			this.updated_preview_mode();
-		});			
+		});
 
-//xxxx
 		$(this.BRUSH).on('current-updated',(e)=>{		
 			if(!this.ALL_READY) return false;
 			this.ZOOM.change_pan_mode(false);
@@ -1412,7 +1415,16 @@ var PainterSave = {
 	init:function(painter_id,params){
 		this.$painter = $('#'+painter_id);
 		this.params = params;
+		this.NOW_SAVING = false;
+		this.WIN_VISIBLE = false;
+		this.IS_HOVER = false;
 		this.build();
+	},	
+	is_opened:function(){		
+		return this.WIN_VISIBLE;
+	},
+	is_hover:function(){
+		return this.IS_HOVER;
 	},
 	build:function(){
 		this.$btnSave = $('<div id="painter-button-save" class="noselect">Сохранить</div>');
@@ -1420,25 +1432,49 @@ var PainterSave = {
 			'<div class="painter-win-content noselect">',			
 			'<div class="painter-win-content_title">Выберите действие:</div>',
 				'<div class="buttons">',
-					'<div class="painter-win-content_btn">Сохранить эскиз к себе на компьютер</div>',
-					'<div class="painter-win-content_btn">Сохранить эскиз и отправить заказ</div>',			
+					'<div class="painter-win-content_btn">Сохранить к себе на компьютер</div>',
+					'<div class="painter-win-content_btn">Сохранить и отправить заказ</div>',			
 				'</div>',
 				'<div class="painter-win-btn-close"><span></span><span></span></div>',
 			'</div>'
 			].join('');
-		this.$saveWin = $('<div id="painter-save-win">'+winSaveContent+'</div>');
+		this.$saveWin = $('<div id="painter-save-win">'+winSaveContent+'</div>').hide();
 		this.$painter.append(this.$btnSave);
 		this.$painter.append(this.$saveWin);		
+		this.$btnClose = this.$saveWin.find('.painter-win-btn-close');
 		this.behavior();
 	},
+	say:function(msg){
+		$(this).trigger(msg);
+	},
 	behavior:function(){
-		this.$btnSave.on("touchend, click",(e)=>{ this.open_save_win();})
+		this.$btnSave.on("touchend, click",(e)=>{ 
+			this.open_save_win(); 
+			this.say("changed-visibility");			
+		});
+		this.$btnClose.on("touchend, click",(e)=>{  
+			this.close_save_win(); 
+			this.say("changed-visibility");
+		});
+		this.$btnSave.hover(()=>{this.IS_HOVER=true;},()=>{this.IS_HOVER=false;});
 	},
 	open_save_win:function(){
-
+		this.WIN_VISIBLE = true;
+		this.$btnSave.hide();
+		this.$saveWin.show();
+		this.TMR_WIN && clearTimeout(this.TMR_WIN);
+		this.TMR_WIN = setTimeout(()=>{
+			this.$saveWin.addClass("shown");
+		},0);
 	},
 	close_save_win:function(){
-
+		this.WIN_VISIBLE = false;		
+		this.$saveWin.removeClass("shown");
+		this.TMR_WIN && clearTimeout(this.TMR_WIN);		
+		this.TMR_WIN = setTimeout(()=>{			
+			this.$saveWin.hide();
+			this.$btnSave.show();
+		},300);
 	}
 };
 
