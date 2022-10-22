@@ -98,8 +98,9 @@ align-items: center;
 	padding:10px 30px;color:white;cursor: pointer;
 	background: #00A2AB;font:.8rem arial;white-space: nowrap;
 	margin:0 0 0 auto; transition:.3s;border-radius: 8px;text-align: center;
+	border:2px solid transparent;
 }
-#painter-save-win .btn-send-order:hover{opacity: .6;}
+#painter-save-win .btn-send-order:hover{background: #015B59; border:2px solid #00A2AB;}
 #painter-save-win .btn-send-order:active{opacity: 1;transition:0s;}
 #painter-save-win .size-btns {display: flex;column-gap:2%;}
 #painter-save-win .size-btns span{
@@ -122,17 +123,16 @@ align-items: center;
 #painter-save-win .size-btns span:active{background: #4F4F4F;transition: 0s;}
 #painter-save-win .size-btns span.current{background:#00A2AB;color:white;}
 
-
-
 #painter-save-win .page-form .order-row input:focus{border:2px solid white; }
 #painter-save-win .page-form .order-row .label{font:.8rem arial;color:#828282;}
 
-.painter-win-content_btn{background: #327a81;
-	padding:10px 40px;border:2px solid transparent;
-	border-radius: 10px;font:1rem arial;transition: .3s;cursor: pointer;}
+.painter-win-content_btn{
+	background: #00A2AB;padding:10px 40px;border:2px solid transparent;color:white;
+	border-radius: 10px;font:1rem arial;transition: .3s;cursor: pointer;
+}
 .painter-win-content_btn:nth-child(1){margin: 0 0 10px 0;}
-.painter-win-content_btn:hover{background: #015B59; border:2px solid #327a81;}
-.painter-win-content_btn:active{background: #327a81;transition: 0s;}
+.painter-win-content_btn:hover{background: #015B59; border:2px solid #00A2AB;}
+.painter-win-content_btn:active{background: #00A2AB;transition: 0s;}
 
 .painter-win-content_title{font:.8rem arial;margin: 0 0 20px 0;color:#aaaaaa;}
 .painter-win-btn-close{ width: 40px;height: 40px;position: absolute;top:10px;right: 10px;cursor: pointer;}
