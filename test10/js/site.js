@@ -1418,6 +1418,7 @@ var PainterSave = {
 		this.NOW_SAVING = false;
 		this.WIN_VISIBLE = false;
 		this.IS_HOVER = false;
+		this.COUNTER=0;
 		this.build();
 	},	
 	is_opened:function(){		
@@ -1432,7 +1433,8 @@ var PainterSave = {
 		var SIZES = ['XS','S','M','L','XL','2XL']; 
 		var size_str = "";
 		for(var i=0;i<SIZES.length;i++){
-			size_str+="<span>"+SIZES[i]+"</span>";
+			var current = i===1 ? "class='current'":"";
+			size_str+="<span "+current+">"+SIZES[i]+"</span>";
 		};
 		size_str = '<div class="size-btns">'+size_str+'</div>';
 
@@ -1450,10 +1452,11 @@ var PainterSave = {
 				'<div class="page page-form">',
 					'<div class="painter-win-content_title">Заполните бланк заказа:</div>',
 					'<div class="painter-order-blank">',
-						'<div class="order-row"><div>Ваше имя:</div><div><input type="text" name="your-name"></div></div>',
-						'<div class="order-row"><div>Телефон:</div><div><input type="text" name="your-phone"></div></div>',
-						'<div class="order-row"><div>Размер <br>изделия:</div><div>'+size_str+'</div></div>',
-						'<div> <div class="btn-send-order">ОТПРАВИТЬ ЗАКАЗ</div> </div>',
+						'<div class="order-row"><div class="label">Ваше имя:</div><div><input type="text" name="your-name"></div></div>',
+						'<div class="order-row"><div class="label">Телефон:</div><div><input type="text" name="your-phone"></div></div>',
+						'<div class="order-row"><div class="label">Размер <br>изделия:</div><div>'+size_str+'</div></div>',
+						'<div class="order-wrong "></div>',
+						'<div class="order-button"> <div class="btn-send-order">ОТПРАВИТЬ ЗАКАЗ</div> </div>',
 					'</div>',
 				'</div>'
 		].join(''); 
@@ -1477,8 +1480,10 @@ var PainterSave = {
 		this.$painter.append(this.$btnSave);
 		this.$painter.append(this.$saveWin);		
 		this.$btnClose = this.$saveWin.find('.painter-win-btn-close');
-		this.$btnMakeOrder =  this.$saveWin.find('.painter-win-button__make-order');
+		this.$btnMakeOrder =  this.$saveWin.find('.painter-win-button__make-order');		
 		this.$btnSaveAndClose =  this.$saveWin.find('.painter-win-button__save-and-close');
+		this.$btnSendOrder =  this.$saveWin.find('.btn-send-order');
+		this.$msgWrong =  this.$saveWin.find('.order-wrong');		
 		this.$pages = this.$saveWin.find('.page'); 
 
 		this.behavior();
@@ -1489,11 +1494,34 @@ var PainterSave = {
 	set_page_current:function(index){
 		this.$pages.removeClass('current').eq(index).addClass('current');
 	},
+	show_wrong_order:function(msg){
+
+		this.COUNTER++;
+		if(this.COUNTER>3){msg="";this.COUNTER=0;}
+
+		if(msg){						
+			this.$msgWrong.removeClass('show-err-message').html("&nbsp;");
+			this.$msgWrong.show();
+			this.TMR_WRONG_MSG && clearTimeout(this.TMR_WRONG_MSG);
+			this.TMR_WRONG_MSG = setTimeout(()=>{
+				this.$msgWrong.addClass('show-err-message').html(msg);		
+			},300);			
+		}else{
+			this.$msgWrong.removeClass('show-err-message').html("&nbsp;");
+			this.TMR_WRONG_MSG && clearTimeout(this.TMR_WRONG_MSG);
+			this.TMR_WRONG_MSG = setTimeout(()=>{
+				this.$msgWrong.hide();		
+			},300);
+		}		
+	},
 	save_image_and_close:function(){
 		// save picture 
 		// ...
 		// close win
 		this.close_win(); 		
+	},
+	send_order:function(){
+		this.show_wrong_order("что-то не так");
 	},
 	open_win_make_order:function(){		
 		this.set_page_current(1);
@@ -1502,6 +1530,7 @@ var PainterSave = {
 		
 		this.$btnSaveAndClose.on("touchend, click",(e)=>{ this.save_image_and_close();});		
 		this.$btnMakeOrder.on("touchend, click",(e)=>{ this.open_win_make_order();});
+		this.$btnSendOrder.on("touchend, click",(e)=>{ this.send_order();});
 
 		this.$btnSave.on("touchend, click",(e)=>{ 
 			this.open_win(); 			
