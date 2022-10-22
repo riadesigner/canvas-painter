@@ -79,16 +79,18 @@ align-items: center;
 #painter-save-win{position: absolute;width: 100%;height: 100%;background: #26262677;top:0;left: 0;}
 #painter-save-win .painter-win-content{
 	min-width: 400px;min-height: 100px;position: absolute;top:40%;left: 50%;border:1px solid #777777;
-	background: #262626aa; transform: translate(-50%,-50%) scale(1.2);border-radius: 12px;
+	background: rgb(38,38,38,.9); transform: translate(-50%,-50%) scale(1.2);border-radius: 12px;
 	transition:.6s; padding: 30px;opacity: .5;	
 }
 #painter-save-win.shown .painter-win-content{opacity: 1;transform: translate(-50%,-50%) scale(1);}
+#painter-save-win .pages .page{display: none;}
+#painter-save-win .pages .page.current{display: block;}
 
 .painter-win-content_btn{background: #327a81;
 	padding:10px 40px;border:2px solid transparent;
 	border-radius: 10px;font:1rem arial;transition: .3s;cursor: pointer;}
 .painter-win-content_btn:nth-child(1){margin: 0 0 10px 0;}
-.painter-win-content_btn:hover{background: #296369; border:2px solid #327a81;}
+.painter-win-content_btn:hover{background: #015B59; border:2px solid #327a81;}
 .painter-win-content_btn:active{background: #327a81;transition: 0s;}
 
 .painter-win-content_title{font:.8rem arial;margin: 0 0 20px 0;color:#aaaaaa;}

@@ -1428,52 +1428,108 @@ var PainterSave = {
 	},
 	build:function(){
 		this.$btnSave = $('<div id="painter-button-save" class="noselect">Сохранить</div>');
+
+		var SIZES = ['XS','S','M','L','XL','2XL']; 
+		var size_str = "";
+		for(var i=0;i<SIZES.length;i++){
+			size_str+="<span>"+SIZES[i]+"</span>";
+		};
+		size_str = '<div class="size-btns">'+size_str+'</div>';
+
+		var page1 = [
+				'<div class="page page-ask current">',
+					'<div class="painter-win-content_title">Выберите действие:</div>',
+					'<div class="buttons">',
+						'<div class="painter-win-content_btn painter-win-button__save-and-close">Сохранить к себе на компьютер</div>',
+						'<div class="painter-win-content_btn painter-win-button__make-order">Оформить заказ</div>',
+					'</div>',
+				'</div>'
+		].join(''); 
+
+		var page2 = [
+				'<div class="page page-form">',
+					'<div class="painter-win-content_title">Заполните бланк заказа:</div>',
+					'<div class="painter-order-blank">',
+						'<div class="order-row"><div>Ваше имя:</div><div><input type="text" name="your-name"></div></div>',
+						'<div class="order-row"><div>Телефон:</div><div><input type="text" name="your-phone"></div></div>',
+						'<div class="order-row"><div>Размер <br>изделия:</div><div>'+size_str+'</div></div>',
+						'<div> <div class="btn-send-order">ОТПРАВИТЬ ЗАКАЗ</div> </div>',
+					'</div>',
+				'</div>'
+		].join(''); 
+
+		var page3 = [
+				'<div class="page page-ok">',
+					'<h2>Спасибо.<br>Ваш заказ отправлен.</h2>',
+					'<p>На имя: <span>Алена</span><br>',
+					'Тел: <span>8 89898 8989898</span></p>',
+				'</div>'
+		].join(''); 		
+
 		var winSaveContent = [
-			'<div class="painter-win-content noselect">',			
-			'<div class="painter-win-content_title">Выберите действие:</div>',
-				'<div class="buttons">',
-					'<div class="painter-win-content_btn">Сохранить к себе на компьютер</div>',
-					'<div class="painter-win-content_btn">Сохранить и отправить заказ</div>',			
-				'</div>',
+			'<div class="painter-win-content noselect">',							
+				'<div class="pages">'+page1+page2+page3+'</div>',
 				'<div class="painter-win-btn-close"><span></span><span></span></div>',
 			'</div>'
 			].join('');
-		this.$saveWin = $('<div id="painter-save-win">'+winSaveContent+'</div>').hide();
+
+		this.$saveWin = $('<div id="painter-save-win">'+winSaveContent+'</div>').hide();		
 		this.$painter.append(this.$btnSave);
 		this.$painter.append(this.$saveWin);		
 		this.$btnClose = this.$saveWin.find('.painter-win-btn-close');
+		this.$btnMakeOrder =  this.$saveWin.find('.painter-win-button__make-order');
+		this.$btnSaveAndClose =  this.$saveWin.find('.painter-win-button__save-and-close');
+		this.$pages = this.$saveWin.find('.page'); 
+
 		this.behavior();
 	},
 	say:function(msg){
 		$(this).trigger(msg);
 	},
+	set_page_current:function(index){
+		this.$pages.removeClass('current').eq(index).addClass('current');
+	},
+	save_image_and_close:function(){
+		// save picture 
+		// ...
+		// close win
+		this.close_win(); 		
+	},
+	open_win_make_order:function(){		
+		this.set_page_current(1);
+	},	
 	behavior:function(){
+		
+		this.$btnSaveAndClose.on("touchend, click",(e)=>{ this.save_image_and_close();});		
+		this.$btnMakeOrder.on("touchend, click",(e)=>{ this.open_win_make_order();});
+
 		this.$btnSave.on("touchend, click",(e)=>{ 
-			this.open_save_win(); 
-			this.say("changed-visibility");			
+			this.open_win(); 			
 		});
 		this.$btnClose.on("touchend, click",(e)=>{  
-			this.close_save_win(); 
-			this.say("changed-visibility");
+			this.close_win(); 			
 		});
 		this.$btnSave.hover(()=>{this.IS_HOVER=true;},()=>{this.IS_HOVER=false;});
 	},
-	open_save_win:function(){
+	open_win:function(){
 		this.WIN_VISIBLE = true;
+		this.set_page_current(0);
 		this.$btnSave.hide();
 		this.$saveWin.show();
 		this.TMR_WIN && clearTimeout(this.TMR_WIN);
 		this.TMR_WIN = setTimeout(()=>{
 			this.$saveWin.addClass("shown");
+			this.say("changed-visibility");			
 		},0);
 	},
-	close_save_win:function(){
+	close_win:function(){
 		this.WIN_VISIBLE = false;		
 		this.$saveWin.removeClass("shown");
 		this.TMR_WIN && clearTimeout(this.TMR_WIN);		
 		this.TMR_WIN = setTimeout(()=>{			
 			this.$saveWin.hide();
 			this.$btnSave.show();
+			this.say("changed-visibility");			
 		},300);
 	}
 };
