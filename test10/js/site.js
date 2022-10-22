@@ -1456,7 +1456,10 @@ var PainterSave = {
 						'<div class="order-row"><div class="label">Телефон:</div><div><input type="text" name="your-phone"></div></div>',
 						'<div class="order-row"><div class="label">Размер <br>изделия:</div><div>'+size_str+'</div></div>',
 						'<div class="order-wrong "></div>',
-						'<div class="order-button"> <div class="btn-send-order">ОТПРАВИТЬ ЗАКАЗ</div> </div>',
+						'<div class="order-footer">',
+							'<div class="order-ajax-loader"> <span></span> </div>',
+							'<div class="order-button"> <div class="btn-send-order">ОТПРАВИТЬ ЗАКАЗ</div> </div>',
+						'</div>',
 					'</div>',
 				'</div>'
 		].join(''); 
@@ -1510,9 +1513,26 @@ var PainterSave = {
 			this.$msgWrong.removeClass('show-err-message').html("&nbsp;");
 			this.TMR_WRONG_MSG && clearTimeout(this.TMR_WRONG_MSG);
 			this.TMR_WRONG_MSG = setTimeout(()=>{
-				this.$msgWrong.hide();		
+				this.$msgWrong.hide();
+				this.show_order_ok();
 			},300);
 		}		
+	},
+	now_sending:function(mode){
+		this.NOW_SENDING = mode;
+		if(mode){
+			this.$saveWin.addClass('now-sending');
+			this.TMR_SENDING && clearTimeout(this.TMR_SENDING);
+			this.TMR_SENDING = setTimeout(()=>{
+				this.now_sending(false);	
+			},1000);
+		}else{
+			this.$saveWin.removeClass('now-sending');
+		}
+	},
+	show_order_ok:function(){
+		this.now_sending(false);
+		this.set_page_current(2);
 	},
 	save_image_and_close:function(){
 		// save picture 
@@ -1521,6 +1541,7 @@ var PainterSave = {
 		this.close_win(); 		
 	},
 	send_order:function(){
+		this.now_sending(true);		
 		this.show_wrong_order("что-то не так");
 	},
 	open_win_make_order:function(){		
@@ -1528,16 +1549,12 @@ var PainterSave = {
 	},	
 	behavior:function(){
 		
-		this.$btnSaveAndClose.on("touchend, click",(e)=>{ this.save_image_and_close();});		
-		this.$btnMakeOrder.on("touchend, click",(e)=>{ this.open_win_make_order();});
-		this.$btnSendOrder.on("touchend, click",(e)=>{ this.send_order();});
+		this.$btnSaveAndClose.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.save_image_and_close();});		
+		this.$btnMakeOrder.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.open_win_make_order();});
+		this.$btnSendOrder.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.send_order();});
 
-		this.$btnSave.on("touchend, click",(e)=>{ 
-			this.open_win(); 			
-		});
-		this.$btnClose.on("touchend, click",(e)=>{  
-			this.close_win(); 			
-		});
+		this.$btnSave.on("touchend, click",(e)=>{ this.open_win(); });
+		this.$btnClose.on("touchend, click",(e)=>{  this.close_win(); });
 		this.$btnSave.hover(()=>{this.IS_HOVER=true;},()=>{this.IS_HOVER=false;});
 	},
 	open_win:function(){

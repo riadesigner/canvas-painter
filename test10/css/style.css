@@ -85,7 +85,6 @@ align-items: center;
 #painter-save-win.shown .painter-win-content{opacity: 1;transform: translate(-50%,-50%) scale(1);}
 #painter-save-win .pages .page{display: none;}
 #painter-save-win .pages .page.current{display: block;}
-#painter-save-win .page-form .order-button{text-align: right;}
 #painter-save-win .page-form .order-row{display: flex;margin: 0 0 10px 0;}
 #painter-save-win .page-form .order-row:nth-child(2){margin: 0 0 20px 0;}
 #painter-save-win .page-form .order-row:nth-child(3){margin: 0 0 30px 0;}
@@ -96,7 +95,7 @@ align-items: center;
 	padding:8px 15px;color:black;border-radius: 8px;outline: none;
 }
 #painter-save-win .btn-send-order{
-	width: 60%;padding:10px 30px;color:white;cursor: pointer;
+	padding:10px 30px;color:white;cursor: pointer;
 	background: #00A2AB;font:.8rem arial;white-space: nowrap;
 	margin:0 0 0 auto; transition:.3s;border-radius: 8px;text-align: center;
 }
@@ -110,9 +109,19 @@ align-items: center;
 #painter-save-win .order-wrong {color: white;font:.9rem arial;margin: 0 0 20px 0;opacity: 0;transition: .6s;transform: scale(1.1);}
 #painter-save-win .order-wrong.show-err-message{opacity: 1;transform: scale(1);}
 
+#painter-save-win .order-footer{display: flex;align-items: center}
+#painter-save-win .order-footer .order-ajax-loader{width: 30%;}
+#painter-save-win .order-footer .order-ajax-loader span{
+	width: 26px;height: 26px;background: url("../i/loader.png") no-repeat center / 100%;
+	display: none; animation: 1s loader-ani linear infinite; 
+}
+#painter-save-win.now-sending .order-ajax-loader span{display: block;}
+#painter-save-win .order-footer .order-button{width: 70%;text-align: right;}
+
 #painter-save-win .size-btns span:hover{color: lightgray;}
 #painter-save-win .size-btns span:active{background: #4F4F4F;transition: 0s;}
 #painter-save-win .size-btns span.current{background:#00A2AB;color:white;}
+
 
 
 #painter-save-win .page-form .order-row input:focus{border:2px solid white; }
@@ -145,9 +154,7 @@ align-items: center;
 #painter-loader.now-loading .content{opacity: 1; transform: translate(-50%,-50%) scale(1);}
 #painter-loader.now-loading .loader-icon >span{animation: 1s loader-ani linear infinite; }
 
-@keyframes loader-ani{
-	100%{transform: rotate(359deg);}
-}
+@keyframes loader-ani{ 100%{transform: rotate(359deg);}}
 
 /*
 
