@@ -42,13 +42,14 @@ var Painter = {
 		this.CANCELSYSTEM = params.cancelSystem;	
 		this.themesSystem = params.themesSystem;				
 		this.saveSystem = params.saveSystem;
+		this.samples = params.samples;
 
 		var init_scale = this.PARAM.init_scale?this.PARAM.init_scale:1;		
 		this.SCALE_ASPECT = init_scale;
 
 		this.ALL_READY = false;
 		this.LOADING_MESSAGES = {};
-		this.LOADING_MESSAGES.painter = "Загрузка...";
+		this.LOADING_MESSAGES.painter = "<h2>Загрузка...</h2>";
 
 		 
 		this.$loader = $('#painter-loader');
@@ -56,30 +57,36 @@ var Painter = {
 
 		this.pre_build();		
 		this.recalc_size();
-		this.behavior();		
-		// this.textures_preload();
+		this.behavior();				
 
 	},	
 
-	loader_show:function() {
-		this.NOW_LOADING = true;
+	loader_show:function() {		
+		if(!this.NOW_LOADING){
+			this.NOW_LOADING = true;			
+			this.$loader.show();
+			this.TMR_LOADER && clearTimeout(this.TMR_LOADER);
+			this.TMR_LOADER = setTimeout(()=>{ this.$loader.addClass('now-loading'); },0);			
+			this.loader_messages_update();
+		};
+	},
+	loader_hide:function() {	
 		
-		this.$loader.show();
+		this.NOW_LOADING = false;
+		this.$loader.removeClass('now-loading');
 		this.TMR_LOADER && clearTimeout(this.TMR_LOADER);
-		this.TMR_LOADER = setTimeout(()=>{ this.$loader.addClass('now-loading'); },0);
-		
+		this.TMR_LOADER = setTimeout(()=>{ this.$loader.hide(); },300);
+	},
+	loader_messages_update:function() {
 		var str = "";
 		for (var i in this.LOADING_MESSAGES){
 			str += "<p>"+this.LOADING_MESSAGES[i]+"</p>";
 		};
 		this.$loader.find(".message").html(str);
-
 	},
-	loader_hide:function() {	
-		this.NOW_LOADING = false;
-		this.$loader.removeClass('now-loading');
-		this.TMR_LOADER && clearTimeout(this.TMR_LOADER);
-		this.TMR_LOADER = setTimeout(()=>{ this.$loader.hide(); },300);
+	loader_add_message:function(section,message) {
+		this.LOADING_MESSAGES[section] = message;
+		this.loader_messages_update();
 	},
 	set_status:function(msg){
 		this.STATUS = msg;
@@ -132,10 +139,9 @@ var Painter = {
 		this.user_canvas.height = this.CANVAS_HEIGHT;
 
 		this.PARAM.onready && this.PARAM.onready();	
-
 		this.CANCELSYSTEM.make_snapshot(this.user_canvas);
 		this.set_status('загрузка...');
-		this.compose();
+		this.compose();				
 
 	},
 	update_bg_layer:function(){
@@ -210,13 +216,16 @@ var Painter = {
 		return size;
 	},
 	is_all_ready:function() {
-		if(this.themesSystem.is_ready() && this.models.is_ready()){
+		if(this.themesSystem.is_ready() 
+			&& this.models.is_ready()
+			&& this.samples.is_ready()){
 			this.ALL_READY = true;
 			this.update_texture_layer();
 			this.update_model_layer();
 			this.compose();
 			this.set_status("Все готово");
 			setTimeout(()=>{ this.loader_hide();},300);
+			this.show_random_sample();
 			return this.ALL_READY;
 		}
 	},
@@ -386,8 +395,16 @@ var Painter = {
 			this.updated_preview_mode();			
 		});		
 
-		$(this.themesSystem).on('all-loaded',()=>{ this.is_all_ready(); });		
-		$(this.models).on('all-loaded',()=> { this.is_all_ready(); });			
+		$(this.themesSystem).on('all-loaded',()=>{
+			this.loader_add_message("themes","Текстуры ... ок");
+			this.is_all_ready(); });		
+		$(this.models).on('all-loaded',()=> { 
+			this.loader_add_message("models","Модели ... ок");
+			this.is_all_ready(); });			
+		$(this.samples).on('all-samples-loaded',()=> { 
+			this.loader_add_message("samples","Примеры ... ок");
+			this.is_all_ready(); });					
+
 		$(this.themesSystem).on('theme-changed',(index)=>{ this.theme_changed(index);});		
 		$(this.models).on('onchanged',(index)=>{ this.model_changed(index); });
 
@@ -398,7 +415,7 @@ var Painter = {
 		this.compose();
 	},
 	theme_changed:function(index){
-		//xxx
+		
 		var _this =this;
 		var foo = {
 			change_theme:()=>{
@@ -436,6 +453,24 @@ var Painter = {
 		}
 
 
+	},
+	show_random_sample:function() {
+		// if(this.ZOOM.is_preview_mode()){
+		// 	var img = this.models.get_preview();
+		// }else{
+		// 	var img = this.models.get_image();
+		// };	
+
+
+		var img = this.samples.get_random();
+		var size = this.calc_model_size(img);
+		this.user_ctx.clearRect(0, 0,size.w,size.h);
+		this.user_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );				
+		this.theme_changed();
+
+		// this.ZOOM.change_preview_mode(true);
+		// this.updated_preview_mode();
+		
 	},
 	compose:function(){		
 		if(this.ZOOM.is_preview_mode()){
@@ -1660,6 +1695,54 @@ var PainterSave = {
 	}
 };
 
+var PainterSamples = {
+	init:function(painter_id,arr_samples) {
+		this.$parent = $('#'+painter_id);
+		this.ARR = arr_samples || [];
+		this.ARR_IMAGE_LOADED = [];
+		this.ALL_READY = false;		
+		this.preload();		
+		return this;
+	},
+	get_random:function() {
+		var max =  this.ARR_IMAGE_LOADED.length-1;
+		var i = Math.floor(Math.random() * max);
+		return this.ARR_IMAGE_LOADED[i];
+	},
+	preload:function() {
+		var _this=this;
+		if(!this.ARR_IMAGE_LOADED.length){
+			this.need_to_load = [];
+			for(var i in this.ARR){
+				this.need_to_load.push(this.ARR[i]);
+			}
+		};
+		var foo = {
+			load_sample:function() {
+				var s = _this.need_to_load.shift();	
+				if(s){
+					var img = new Image();
+					img.onload = function() {
+						_this.ARR_IMAGE_LOADED.push(this);
+						foo.load_sample();						
+					};
+					img.src = s; 
+				}else{
+					_this.ALL_READY = true;
+					_this.say("all-samples-loaded");
+				}
+			}
+		};
+		foo.load_sample();
+	},
+	say:function(msg) {
+		console.log('msg',msg,this.ARR_IMAGE_LOADED);
+		$(this).trigger(msg);
+	},
+	is_ready:function() {
+		return this.ALL_READY;
+	}
+};
 
 $(function(){	
 
@@ -1690,30 +1773,36 @@ var ARR_THEMES = {
 
 var ARR_MODELS = [
 		{pos:0,
-			img:"models/model-1.png",
+			img:"models2/model-1.png",
 			title:"тельняшка с рукавами",
-			mask:"models/model-1-mask.png",
+			mask:"models2/model-1-mask.png",
 			preview:{
-				black:"models/model-1-black.png",
-				blue:"models/model-1-blue.png",
-				red:"models/model-1-red.png"}},
+				black:"models2/model-1-black.png",
+				blue:"models2/model-1-blue.png",
+				red:"models2/model-1-red.png"}},
 		{pos:1,
-			img:"models/model-2.png",
+			img:"models2/model-2.png",
 			title:"тельняшка без рукавов",
-			mask:"models/model-2-mask.png",
+			mask:"models2/model-2-mask.png",
 			preview:{
-				black:"models/model-2-black.png",
-				blue:"models/model-2-blue.png",
-				red:"models/model-2-red.png"}},
+				black:"models2/model-2-black.png",
+				blue:"models2/model-2-blue.png",
+				red:"models2/model-2-red.png"}},
 		{pos:2,
-			img:"models/model-3.png",
+			img:"models2/model-3.png",
 			title:"тельняшка-платье с рукавами",
-			mask:"models/model-3-mask.png",
+			mask:"models2/model-3-mask.png",
 			preview:{
-				black:"models/model-3-black.png",
-				blue:"models/model-3-blue.png",
-				red:"models/model-3-red.png"}}
+				black:"models2/model-3-black.png",
+				blue:"models2/model-3-blue.png",
+				red:"models2/model-3-red.png"}}
 		];
+
+
+var SAMPLES = [	
+		"samples/sample-01.png","samples/sample-02.png","samples/sample-03.png",
+		"samples/sample-04.png","samples/sample-05.png","samples/sample-06.png"
+	];
 
 	var CFG = {
 		size:{ width:1000,height:800},
@@ -1722,20 +1811,23 @@ var ARR_MODELS = [
 		max_cancel_steps:5,
 		themes:ARR_THEMES,
 		models:ARR_MODELS,
-		save_params:{email:'e.pogrebnyak@mail.ru'}		
+		save_params:{email:'e.pogrebnyak@mail.ru'},
+		arr_samples:SAMPLES
 	};
 
 
 	Painter.init('painter',CFG.size,{		
 		brush:PainterBrush,
 		models:PainterModel,
+		samples:PainterSamples,
 		zoom:PainterZoom,
 		cancelSystem:PainterCancelSystem,
 		themesSystem:PainterThemes,
 		statusbar:PainterStatusbar,
 		init_scale:CFG.init_scale,		
-		saveSystem:PainterSave,
+		saveSystem:PainterSave,		
 		onready:function(){
+			this.samples.init('painter',CFG.arr_samples);
 			this.models.init('painter',CFG.models);
 			this.brush.init('painter',CFG.brush_params);
 			this.zoom.init('painter',CFG.init_scale);
