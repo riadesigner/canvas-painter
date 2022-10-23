@@ -394,6 +394,10 @@ var Painter = {
 			this.ZOOM.change_preview_mode(false);
 			this.updated_preview_mode();			
 		});		
+		$(this.BRUSH).on('random',(e)=>{
+			if(!this.ALL_READY) return false;
+			this.show_random_sample();
+		});				
 
 		$(this.themesSystem).on('all-loaded',()=>{
 			this.loader_add_message("themes","Текстуры ... ок");
@@ -455,22 +459,11 @@ var Painter = {
 
 	},
 	show_random_sample:function() {
-		// if(this.ZOOM.is_preview_mode()){
-		// 	var img = this.models.get_preview();
-		// }else{
-		// 	var img = this.models.get_image();
-		// };	
-
-
 		var img = this.samples.get_random();
 		var size = this.calc_model_size(img);
 		this.user_ctx.clearRect(0, 0,size.w,size.h);
 		this.user_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );				
 		this.theme_changed();
-
-		// this.ZOOM.change_preview_mode(true);
-		// this.updated_preview_mode();
-		
 	},
 	compose:function(){		
 		if(this.ZOOM.is_preview_mode()){
@@ -738,7 +731,7 @@ var PainterBrush = {
 		this.$tools = $([
 			'<div id="painter-tools-id" class="noselect">',
 			'<div class="painter-tools-newdoc"></div>',
-			'<div class="painter-tools-fill disabled"></div>',
+			'<div class="painter-tools-random"></div>',
 			'<div class="painter-tools-brush current"></div>',
 			'<div class="painter-tools-eraser"></div>',
 			'<div class="painter-tools-clearall"></div>',
@@ -757,6 +750,8 @@ var PainterBrush = {
 		this.$eraserTool = this.$tools.find('.painter-tools-eraser');
 		this.$newdocTool = this.$tools.find('.painter-tools-newdoc');
 		this.$clearallTool = this.$tools.find('.painter-tools-clearall');
+		this.$randomTool = this.$tools.find('.painter-tools-random');
+		
 		
 		this.behavior();
 		this.b_size_update(0);
@@ -852,7 +847,10 @@ var PainterBrush = {
 		this.$newdocTool.on('touchend, click',function(){			
 			_this.say("newdoc");
 			_this.set_current('brush');
-		});			
+		});		
+		this.$randomTool.on('touchend, click',function(){			
+			_this.say("random");			
+		});				
 		
 		var foo = {
 			calc:function(e){

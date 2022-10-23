@@ -214,21 +214,21 @@ body{
 
 #painter-tools-id {position: absolute;top:5%;left:30px;}
 .painter-tools-newdoc,
-.painter-tools-fill,
+.painter-tools-random,
 .painter-tools-brush,
 .painter-tools-eraser,
 .painter-tools-clearall{position: absolute;width: 52px;height: 48px;border-radius: 16px;cursor: pointer;}
 .painter-tools-brushsizer{position: absolute;width: 52px;height: 240px;border-radius: 16px;cursor: pointer;}
 
 .painter-tools-newdoc,
-.painter-tools-fill,
+.painter-tools-random,
 .painter-tools-brush,
 .painter-tools-eraser,
 .painter-tools-clearall,
 .painter-tools-brushsizer{background: url('../i/icons-tools-3.png') no-repeat top left / 100% auto;}
 
 .painter-tools-newdoc{background-position:0 0; }
-.painter-tools-fill{background-position:0 11.0%; }
+.painter-tools-random{background-position:0 11.0%; }
 .painter-tools-clearall{background-position:0 22.2%; }
 .painter-tools-brush{background-position:0 33.5%; }
 .painter-tools-eraser{background-position:0 44.5%; }
@@ -245,24 +245,24 @@ body{
 .painter-tools-brushsizer:hover > span span{border:3px solid rgba(255,255,255,1);}
 
 .painter-tools-newdoc,
-.painter-tools-fill,
+.painter-tools-random,
 .painter-tools-brush,
 .painter-tools-eraser,
 .painter-tools-clearall,
 .painter-tools-brushsizer{background-color: #99aab0;transition: .3s;}
 .painter-tools-newdoc:hover,
-.painter-tools-fill:hover,
+.painter-tools-random:hover,
 .painter-tools-brush:hover,
 .painter-tools-eraser:hover,
 .painter-tools-clearall:hover,
 .painter-tools-brushsizer:hover{background-color: #c1d2d6;}
 .painter-tools-newdoc:active,
-.painter-tools-fill:active,
+.painter-tools-random:active,
 .painter-tools-brush:active,
 .painter-tools-eraser:active,
 .painter-tools-clearall:active{background-color: #ffffff;transition: 0s;}
 
-.painter-tools-fill.current,
+.painter-tools-random.current,
 .painter-tools-brush.current,
 .painter-tools-eraser.current{background-color: #ffffff;}
 #painter-tools-id>div.disabled{opacity: .5;cursor: default;}
@@ -272,7 +272,7 @@ body{
 .painter-tools-newdoc{left:0;top:0;}
 .painter-tools-clearall{left:0;top:65px;}
 .painter-tools-eraser{left:0;top:122px;}
-.painter-tools-fill{left:61px;top:65px;}
+.painter-tools-random{left:61px;top:65px;}
 .painter-tools-brush{left:61px;top:122px;}
 .painter-tools-brushsizer{left:0;top:187px;}
 
