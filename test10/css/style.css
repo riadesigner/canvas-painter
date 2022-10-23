@@ -67,6 +67,9 @@ align-items: center;
 .theme-purple-blue #painter{background: purple;}
 .theme-green-blue #painter{background: #377C8E;}
 	
+/*
+	SENDING ORDER
+*/
 
 #painter-button-save{
 	position: absolute;bottom: 40px;right: 20px;border:1px solid lightgray;
@@ -155,6 +158,10 @@ align-items: center;
 #painter-loader.now-loading .loader-icon >span{animation: 1s loader-ani linear infinite; }
 
 @keyframes loader-ani{ 100%{transform: rotate(359deg);}}
+
+#painter-save-win .page-ok h2{font: 1.2rem arial; color:white;}
+#painter-save-win .page-ok p{font: .9rem arial;color:white; line-height: 1.4;}
+#painter-save-win .page-ok p span{color:#4dc7c1;}
 
 /*
 

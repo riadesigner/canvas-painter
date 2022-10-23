@@ -1033,9 +1033,18 @@ var PainterThemes = {
 		
 		return this;
 	},
-	//public
+	//public	
 	get:function() {
 		return this.SETS[this.CURRENT];
+	},
+	get_current_texture_name:function() {
+		var s = this.SETS[this.CURRENT]; 
+		return this.TEXTURES[s.texture].title;	
+	},
+	get_current_lines_color:function() {
+		var lines = this.SETS[this.CURRENT].lines; 
+		var colors = {black:"черные",red:"красные",blue:"синие"};		
+		return colors[lines];
 	},
 	get_status:function(){
 		return this.STATUS;
@@ -1275,6 +1284,9 @@ var PainterModel = {
 		// this.behavior();
 		return this;
 	},
+	get_current_name:function() {
+		return this.ARR[this.CURRENT].title;
+	},
 	is_theme_loaded:function(set) {
 		var lines = set.lines;
 		var loaded = this.ARR_PREVIEW_LOADED[lines].length;
@@ -1430,11 +1442,11 @@ var PainterSave = {
 	build:function(){
 		this.$btnSave = $('<div id="painter-button-save" class="noselect">Сохранить</div>');
 
-		var SIZES = ['XS','S','M','L','XL','2XL']; 
+		this.ARR_SIZES = ['XS','S','M','L','XL','2XL']; 
 		var size_str = "";
-		for(var i=0;i<SIZES.length;i++){
+		for(var i=0;i<this.ARR_SIZES.length;i++){
 			var current = i===1 ? "class='current'":"";
-			size_str+="<span "+current+">"+SIZES[i]+"</span>";
+			size_str+="<span "+current+">"+this.ARR_SIZES[i]+"</span>";
 		};
 		size_str = '<div class="size-btns">'+size_str+'</div>';
 
@@ -1466,9 +1478,13 @@ var PainterSave = {
 
 		var page3 = [
 				'<div class="page page-ok">',
-					'<h2>Спасибо.<br>Ваш заказ отправлен.</h2>',
-					'<p>На имя: <span>Алена</span><br>',
-					'Тел: <span>8 89898 8989898</span></p>',
+					'<h2>Спасибо.<br>Ваш заказ отправлен</h2>',
+					'<p>От: <span class="from-name">&nbsp;</span><br>',					
+					'Тел: <span class="from-phone">&nbsp;</span><br>',
+					'Модель: <span class="item-model">&nbsp;</span><br>',
+					'Размер: <span class="item-size">&nbsp;</span><br>',
+					'Ткань: <span class="item-texture">&nbsp;</span><br>',
+					'Полоски: <span class="item-lines">&nbsp;</span></p>',
 				'</div>'
 		].join(''); 		
 
@@ -1482,14 +1498,27 @@ var PainterSave = {
 		this.$saveWin = $('<div id="painter-save-win">'+winSaveContent+'</div>').hide();		
 		this.$painter.append(this.$btnSave);
 		this.$painter.append(this.$saveWin);		
+
+		this.$pages = this.$saveWin.find('.page'); 
 		this.$btnClose = this.$saveWin.find('.painter-win-btn-close');
 		this.$btnMakeOrder =  this.$saveWin.find('.painter-win-button__make-order');		
 		this.$btnSaveAndClose =  this.$saveWin.find('.painter-win-button__save-and-close');
 		this.$btnSendOrder =  this.$saveWin.find('.btn-send-order');
-		this.$msgWrong =  this.$saveWin.find('.order-wrong');		
-		this.$pages = this.$saveWin.find('.page'); 
-
+		//page-form
+		this.$msgWrong =  this.$saveWin.find('.order-wrong');
+		this.$btnSize =  this.$saveWin.find('.size-btns span');		
+		this.$usrName =  this.$saveWin.find('input[name=your-name]');
+		this.$usrPhone =  this.$saveWin.find('input[name=your-phone]');
+		//page-ok
+		this.$fromName = this.$saveWin.find('.page-ok .from-name'); 
+		this.$fromPhone = this.$saveWin.find('.page-ok .from-phone');
+		this.$itemModel = this.$saveWin.find('.page-ok .item-model');
+		this.$itemSize = this.$saveWin.find('.page-ok .item-size');
+		this.$itemTexture = this.$saveWin.find('.page-ok .item-texture');
+		this.$itemLines = this.$saveWin.find('.page-ok .item-lines');
+		
 		this.behavior();
+
 	},
 	say:function(msg){
 		$(this).trigger(msg);
@@ -1498,10 +1527,6 @@ var PainterSave = {
 		this.$pages.removeClass('current').eq(index).addClass('current');
 	},
 	show_wrong_order:function(msg){
-
-		this.COUNTER++;
-		if(this.COUNTER>3){msg="";this.COUNTER=0;}
-
 		if(msg){						
 			this.$msgWrong.removeClass('show-err-message').html("&nbsp;");
 			this.$msgWrong.show();
@@ -1513,8 +1538,7 @@ var PainterSave = {
 			this.$msgWrong.removeClass('show-err-message').html("&nbsp;");
 			this.TMR_WRONG_MSG && clearTimeout(this.TMR_WRONG_MSG);
 			this.TMR_WRONG_MSG = setTimeout(()=>{
-				this.$msgWrong.hide();
-				this.show_order_ok();
+				this.$msgWrong.hide();				
 			},300);
 		}		
 	},
@@ -1530,8 +1554,7 @@ var PainterSave = {
 			this.$saveWin.removeClass('now-sending');
 		}
 	},
-	show_order_ok:function(){
-		this.now_sending(false);
+	show_page_ok:function(){		
 		this.set_page_current(2);
 	},
 	save_image_and_close:function(){
@@ -1540,25 +1563,82 @@ var PainterSave = {
 		// close win
 		this.close_win(); 		
 	},
-	send_order:function(){
-		this.now_sending(true);		
-		this.show_wrong_order("что-то не так");
+	get_wrong_user_inputs:function() {
+		
+		this.ORDER = {
+			name:this.$usrName.val(),
+			phone:this.$usrPhone.val(),
+			size:this.$btnSize.filter('.current').html()
+		};
+		
+		if(!this.ORDER.name){
+			return "Укажите ваше имя, пожалуйста"; 
+		}else if(!this.ORDER.phone){
+			return "Укажите ваш телефон, пожалуйста"; 
+		}else{
+			return "";
+		}
+	},
+	verify_and_send_order:function(){
+		this.now_sending(true);	
+		var msg_err = this.get_wrong_user_inputs();
+		if(!msg_err){
+			this.send_order();			
+		}else{
+			this.now_sending(false);	
+			this.show_wrong_order(msg_err);
+		}
+	},
+	reset_form:function() {
+		this.ORDER = {name:"",phone:"",size:""};
+		this.$usrName.val("");
+		this.$usrPhone.val("");
+		this.$fromName.html("");
+		this.$fromPhone.html("");
+		this.$itemModel.html("");
+		this.$itemSize.html("");
+		this.$itemTexture.html("");
+		this.$itemLines.html("");
+	},
+	send_order:function() {
+
+		var texture = PainterThemes.get_current_texture_name();
+		var lines = PainterThemes.get_current_lines_color();
+		console.log('texture,lines',texture,lines)
+		setTimeout(()=>{
+			this.now_sending(false);
+			this.$fromName.html(this.ORDER.name);
+			this.$fromPhone.html(this.ORDER.phone);
+			this.$itemModel.html(PainterModel.get_current_name());
+			this.$itemSize.html(this.ORDER.size);
+			this.$itemTexture.html(texture);
+			this.$itemLines.html(lines);			
+			this.show_page_ok();
+		},1000);		
 	},
 	open_win_make_order:function(){		
 		this.set_page_current(1);
 	},	
+	choose_size:function(index) {
+		this.$btnSize.removeClass('current').eq(index).addClass('current');
+	},
 	behavior:function(){
-		
+		var _this=this;
+
 		this.$btnSaveAndClose.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.save_image_and_close();});		
 		this.$btnMakeOrder.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.open_win_make_order();});
-		this.$btnSendOrder.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.send_order();});
-
+		this.$btnSendOrder.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.verify_and_send_order();});
+		this.$btnSize.each(function(index) {
+			$(this).on("touchend, click",(e)=>{ !_this.NOW_SENDING && _this.choose_size(index);});
+		});
+		
 		this.$btnSave.on("touchend, click",(e)=>{ this.open_win(); });
 		this.$btnClose.on("touchend, click",(e)=>{  this.close_win(); });
 		this.$btnSave.hover(()=>{this.IS_HOVER=true;},()=>{this.IS_HOVER=false;});
 	},
 	open_win:function(){
 		this.WIN_VISIBLE = true;
+		this.reset_form();
 		this.set_page_current(0);
 		this.$btnSave.hide();
 		this.$saveWin.show();
@@ -1587,10 +1667,10 @@ $(function(){
 
 var ARR_THEMES = {
 		textures:[
-			{img:"textures/green.jpg",color:"#04a098"},
-			{img:"textures/sky.jpg",color:"#418dcc"},
-			{img:"textures/blue.jpg",color:"#0d4bac"},
-			{img:"textures/purple.jpg",color:"#8E6386"}
+			{img:"textures/green.jpg",color:"#04a098",title:"Морская капуста"},
+			{img:"textures/sky.jpg",color:"#418dcc",title:"Морской прибой"},
+			{img:"textures/blue.jpg",color:"#0d4bac",title:"Морская пена"},
+			{img:"textures/purple.jpg",color:"#8E6386",title:"Вечерний бриз"}
 			],
 		lines:{
 			black:"#000000",
