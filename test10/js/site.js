@@ -463,6 +463,8 @@ var Painter = {
 		var size = this.calc_model_size(img);
 		this.user_ctx.clearRect(0, 0,size.w,size.h);
 		this.user_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );				
+		this.themesSystem.set_random();
+		this.models.set_random();
 		this.theme_changed();
 	},
 	compose:function(){		
@@ -1128,7 +1130,25 @@ var PainterThemes = {
 	},
 	is_hover:function() {
 		return this.IS_HOVER;
-	},
+	}, 	
+ 	set_random:function() { 	 		
+ 		var _this=this;
+ 		var max = this.SETS.length;
+ 		var chance = 0;
+ 		var foo = {
+ 			get_random:function() {
+ 				var i = Math.floor(Math.random()*max);
+ 				if(i==_this.CURRENT && chance<10){
+ 					chance++;
+ 					return foo.get_random();	
+ 				}else{
+ 					return i;
+ 				}	
+ 			}
+ 		};
+ 		var index = foo.get_random(); 		
+		this.set_current(index);
+ 	},
 	set_current:function(index) {
 		var _this=this;
 		this.CURRENT = index;
@@ -1448,6 +1468,10 @@ var PainterModel = {
 			_this.set_all_loaded();	
 		}
 	},
+	set_random:function() {
+		var index = Math.floor(Math.random()*this.ARR.length);	
+		this.set_current(index);
+	},
 	set_current:function(index) {		
 		this.CURRENT = index;		
 		this.$modelTools && this.$modelTools.find('>div').removeClass('current').eq(index).addClass('current');
@@ -1703,8 +1727,9 @@ var PainterSamples = {
 		return this;
 	},
 	get_random:function() {
-		var max =  this.ARR_IMAGE_LOADED.length-1;
+		var max =  this.ARR_IMAGE_LOADED.length;
 		var i = Math.floor(Math.random() * max);
+		console.log('i',i)
 		return this.ARR_IMAGE_LOADED[i];
 	},
 	preload:function() {
@@ -1798,8 +1823,11 @@ var ARR_MODELS = [
 
 
 var SAMPLES = [	
-		"samples/sample-01.png","samples/sample-02.png","samples/sample-03.png",
-		"samples/sample-04.png","samples/sample-05.png","samples/sample-06.png"
+		"samples4/sample-01.png",
+		"samples4/sample-02.png",
+		"samples4/sample-03.png",
+		"samples4/sample-04.png",
+		"samples4/sample-05.png"
 	];
 
 	var CFG = {
