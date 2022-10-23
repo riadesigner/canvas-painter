@@ -109,7 +109,7 @@ var Painter = {
 		this.$canvas.css({background:'#ffffff',position:'absolute'});					
 		this.$canvas.css({width:b.w,height:b.h,left:b.left,top:b.top});
 
-		this.$painter.append(this.$canvas);		
+		this.$painter.append(this.$canvas);				
 		this.ctx = this.$canvas[0].getContext('2d');
 		
 		this.bg_canvas = document.createElement('canvas');
@@ -411,6 +411,24 @@ var Painter = {
 
 		$(this.themesSystem).on('theme-changed',(index)=>{ this.theme_changed(index);});		
 		$(this.models).on('onchanged',(index)=>{ this.model_changed(index); });
+
+		$(this.saveSystem).on('changed-visibility',(e)=>{
+			if(this.saveSystem.is_opened()){
+				this.update_link_to_save_pict();
+			}			
+		});
+
+	},
+	update_link_to_save_pict:function() {
+		
+		// var dataURL = this.$canvas[0].toDataURL("image/png");
+		// var newTab = window.open('about:blank','Эскиз тельняшки');
+		// newTab.document.write("<img src='" + dataURL + "' alt='эскиз тельняшки'/>");
+
+		var dataURL = this.$canvas[0].toDataURL("image/png");
+		var newdata = dataURL.replace(/^data:image\/png/,'data:application/octet-stream');	    
+	    this.saveSystem.set_pict_to_save(newdata);
+
 
 	},
 	model_changed:function(index){
@@ -1511,8 +1529,8 @@ var PainterSave = {
 				'<div class="page page-ask current">',
 					'<div class="painter-win-content_title">Выберите действие:</div>',
 					'<div class="buttons">',
-						'<div class="painter-win-content_btn painter-win-button__save-and-close">Сохранить к себе на компьютер</div>',
-						'<div class="painter-win-content_btn painter-win-button__make-order">Оформить заказ</div>',
+						'<a href="#" class="painter-win-content_btn painter-win-button__save-and-close">Сохранить к себе на компьютер</a>',
+						'<a href="#" class="painter-win-content_btn painter-win-button__make-order">Оформить заказ</a>',
 					'</div>',
 				'</div>'
 		].join(''); 
@@ -1614,12 +1632,11 @@ var PainterSave = {
 	show_page_ok:function(){		
 		this.set_page_current(2);
 	},
-	save_image_and_close:function(){
-		// save picture 
-		// ...
-		// close win
-		this.close_win(); 		
-	},
+	// save_image_and_close:function(){
+
+	// 	// this.say("save-picture-on-comp");
+	// 	// this.close_win();
+	// },
 	get_wrong_user_inputs:function() {
 		
 		this.ORDER = {
@@ -1679,10 +1696,14 @@ var PainterSave = {
 	choose_size:function(index) {
 		this.$btnSize.removeClass('current').eq(index).addClass('current');
 	},
+	set_pict_to_save:function(imgdata) {
+		console.log("set_pict_to_save!!")
+		this.$btnSaveAndClose.attr('href',imgdata).attr('download','telnyashka.png');
+	},
 	behavior:function(){
 		var _this=this;
 
-		this.$btnSaveAndClose.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.save_image_and_close();});		
+		// this.$btnSaveAndClose.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.save_image_and_close();});		
 		this.$btnMakeOrder.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.open_win_make_order();});
 		this.$btnSendOrder.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.verify_and_send_order();});
 		this.$btnSize.each(function(index) {

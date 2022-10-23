@@ -133,6 +133,7 @@ body{
 .painter-win-content_btn{
 	background: #00A2AB;padding:10px 40px;border:2px solid transparent;color:white;
 	border-radius: 10px;font:1rem arial;transition: .3s;cursor: pointer;
+	display: block;text-decoration: none;
 }
 .painter-win-content_btn:nth-child(1){margin: 0 0 10px 0;}
 .painter-win-content_btn:hover{background: #015B59; border:2px solid #00A2AB;}
