@@ -1,9 +1,10 @@
 body,html{
 	padding:0;margin:0;
 	font-family: arial;
+	width: 100%;height: 100%;
 }
-*{box-sizing: border-box;}
 
+*{box-sizing: border-box;}
 
 body{	
 	background:#333340;
@@ -19,7 +20,7 @@ body{
                                   supported by Chrome, Edge, Opera and Firefox */
 }
 
-#goranskaya-construktor{
+#goranskaya-construktor{	
 	width: 100%;
 	height: 100%;
 	background: lightgray;
@@ -30,13 +31,13 @@ body{
 	background: darkgray;width: 100%;
 	height: 100%;border-radius: 8px;
 	position: relative;overflow: hidden;
+	
 }
 #goranskaya-construktor footer{
-position: absolute;bottom: 0;left:0;
-width: 100%;height: 40px;
-background: black;display: flex;
-align-items: center;
-
+	position: absolute;bottom: 0;left:0;
+	width: 100%;height: 40px;
+	background: black;display: flex;
+	align-items: center;
 }
 #goranskaya-construktor footer >div{width: 50%;}
 #goranskaya-construktor footer {font-size: 0;}
@@ -59,7 +60,13 @@ align-items: center;
 
 #painter{ position: relative;width: 100%;height: 100%;overflow:hidden; background: #333333;}
 
+#goranskaya-logo{ 
+	position:absolute;top:0;right:10%;width:230px;height:53px;border-radius: 0 0 8px 8px;transition: .3s box-shadow;
+	display: block;cursor: pointer;background:#0b8c96 url("../i/icons-logo.png") no-repeat top center/100% auto;
 
+}
+#goranskaya-logo:hover{background-position:bottom center; box-shadow: 0 0 10px rgba(255,255,255,.8);}
+#goranskaya-logo:active{background-position:top center;transition: 0s;}
 
 /*
 	SENDING ORDER
@@ -139,7 +146,7 @@ align-items: center;
 .painter-win-btn-close:hover span{border-color: white;}
 
 
-#painter-loader{position: absolute;width: 100%;height: 100%;background: #26262677;top:0;left: 0;}
+#painter-loader{position: absolute;width: 100%;height: 100%;background: #00000022;top:0;left: 0;}
 #painter-loader .content{
 	min-width: 400px;height: 100px;position: absolute;top:40%;left: 50%;border:1px solid #777777;
 	background: #262626aa; transform: translate(-50%,-50%) scale(1.2);border-radius: 12px;display: flex; opacity: 0;transition:.6s;
@@ -181,10 +188,10 @@ align-items: center;
 #painter-zoom-id .painter-zoom-preview{background-color: #0b8c96;transition: .3s;border:2px solid transparent;}
 #painter-zoom-id .painter-zoom-in:hover,
 #painter-zoom-id .painter-zoom-out:hover,
-#painter-zoom-id .painter-zoom-preview:hover{background-color: #327a81;}
+#painter-zoom-id .painter-zoom-preview:hover{filter: brightness(80%) contrast(120%);}
 #painter-zoom-id .painter-zoom-in:active,
 #painter-zoom-id .painter-zoom-out:active,
-#painter-zoom-id .painter-zoom-preview:active{background-color: #0b8c96;transition: 0s;}
+#painter-zoom-id .painter-zoom-preview:active{filter: brightness(100%);transition: 0s;}
 
 #painter-zoom-id .painter-zoom-pan{border:2px solid transparent; background-color: rgba(255,255,255,.3);}
 #painter-zoom-id .painter-zoom-pan:hover{border:2px solid white;}
@@ -387,6 +394,13 @@ align-items: center;
 .theme-green-blue #painter-zoom-id .painter-zoom-preview{background-position:25% 100%;background-color:#127ed8;}
 
 
+.theme-green-black #goranskaya-logo{background-color: #0b8c96;}
+.theme-sky-black #goranskaya-logo{background-color: #127ed8;}
+.theme-blue-black #goranskaya-logo{background-color: #3061b7;}
+.theme-purple-black #goranskaya-logo{background-color: #794f74;}
+.theme-purple-red #goranskaya-logo{background-color: #934745;}
+.theme-purple-blue #goranskaya-logo{background-color: #794f74;}
+.theme-green-blue #goranskaya-logo{background-color: #127ed8;}
 
 
 
