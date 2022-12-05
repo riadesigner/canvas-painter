@@ -1,16 +1,36 @@
 <?php
 
-echo json_encode(array("OK!!!"));
+$nm = 'arr_emails.json';    
+$arr_emails = json_decode(file_get_contents($nm));
 
-exit();
 
-echo "<pre>";
+$mail_to  = isset($arr_emails->mail_to)?$arr_emails->mail_to:"";
+$copy_to = isset($arr_emails->mail_to)?$arr_emails->mail_to:"";
 
-var_dump($_REQUEST);
+if($mail_to==""){
+    echo json_encode(array("err"=>"wrong emails"));
+    exit();
+}
 
-echo "</pre>";
+$texture = isset($_REQUEST['texture'])?$_REQUEST['texture']:"–";
+$model = isset($_REQUEST['model'])?$_REQUEST['model']:"–";
+$lines = isset($_REQUEST['lines'])?$_REQUEST['lines']:"–";
+$size = isset($_REQUEST['size'])?$_REQUEST['size']:"–";
+$phone = isset($_REQUEST['phone'])?$_REQUEST['phone']:"–";
+$firstName = isset($_REQUEST['firstName'])?$_REQUEST['firstName']:"Неизвестный";
 
-exit();
+$str = "Здравствуйте, Людмила";
+$str .= "<p>высылаю эскиз моего рисунка.</p>";
+$str .= "<p>&nbsp;</p>";
+$str .= "<h2>Параметры изделия</h2>";
+$str .= "<p>Цвет полосок: {$lines}</p>";
+$str .= "<p>Батик: {$texture}</p>";
+$str .= "<p>Модель: {$model}</p>";
+$str .= "<p>Размер: {$size}</p>";
+$str .= "<p>&nbsp;</p>";
+$str .= "<p>С уважением, {$firstName},<br>";
+$str .= "тел. {$phone}</p>";
+
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -18,10 +38,10 @@ use PHPMailer\PHPMailer\Exception;
 
 require_once 'vendor/autoload.php';
 
-
 $username = "cyberbrandvl@yandex.ru";
 $password = "LS8OGs";
-
+$send_to = "e.pogrebnyak@mail.ru";
+$send_copy_to = "e.pogrebnyak@yandex.ru";
 
 $mail = new PHPMailer();
 $mail->CharSet = 'UTF-8';
@@ -37,32 +57,29 @@ $mail->Password = $password; // ваш пароль;
 
 
 // формируем письмо
-
 // от кого: это поле должно быть равно вашему email иначе будет ошибка
 $mail->setFrom($username, 'Конструктор Goranskaya');
 
 // кому - получатель письма
-$mail->addAddress('e.pogrebnyak@mail.ru', 'Дизайнеру');  // кому
+$mail->addAddress($send_to, 'Дизайнеру');  // кому
 
-$mail->Subject = 'Проверка';  // тема письма
+if(isset($send_copy_to))
+$mail->AddCC($send_copy_to, 'Тестировщик');  // кому
 
-$mail->AddAttachment('telnyashka.png');
-
-
-$mail->msgHTML("<html><body>
-            <h1>Заказ с сайта!</h1>
-            <p>Это тестовое письмо.</p>
-            </html></body>");
+$mail->Subject = 'Конструктор. Заказ с сайта!';  // тема письма
 
 
-if ($mail->send()) { // отправляем письмо
-    echo 'Письмо отправлено!';
+$mail->AddAttachment($_FILES['previewImage']['tmp_name'],$_FILES['previewImage']['name']);
+$mail->AddAttachment($_FILES['previewLekalo']['tmp_name'],$_FILES['previewLekalo']['name']);
+
+$mail->msgHTML("<html><body>{$str}</html></body>");
+
+if ($mail->send()) { // отправляем письмо    
+    echo json_encode(array("OK!!!"));
 } else {
-    echo 'Ошибка: ' . $mail->ErrorInfo;
+    echo json_encode(array("err"=>$mail->ErrorInfo));    
 }
 
-
-exit();
 
 
    ?>

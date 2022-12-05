@@ -62,7 +62,7 @@ var Painter = {
 	},	
 
 	loader_show:function() {		
-		if(!this.NOW_LOADING){
+		if(!this.NOW_LOADING){			
 			this.NOW_LOADING = true;			
 			this.$loader.show();
 			this.TMR_LOADER && clearTimeout(this.TMR_LOADER);
@@ -70,8 +70,7 @@ var Painter = {
 			this.loader_messages_update();
 		};
 	},
-	loader_hide:function() {	
-		
+	loader_hide:function() {			
 		this.NOW_LOADING = false;
 		this.$loader.removeClass('now-loading');
 		this.TMR_LOADER && clearTimeout(this.TMR_LOADER);
@@ -1673,9 +1672,6 @@ var PainterSave = {
 		if(mode){
 			this.$saveWin.addClass('now-sending');
 			this.TMR_SENDING && clearTimeout(this.TMR_SENDING);
-			this.TMR_SENDING = setTimeout(()=>{
-				this.now_sending(false);	
-			},1000);
 		}else{
 			this.$saveWin.removeClass('now-sending');
 		}
@@ -1683,11 +1679,6 @@ var PainterSave = {
 	show_page_ok:function(){		
 		this.set_page_current(2);
 	},
-	// save_image_and_close:function(){
-
-	// 	// this.say("save-picture-on-comp");
-	// 	// this.close_win();
-	// },
 	get_wrong_user_inputs:function() {
 		
 		this.ORDER = {
@@ -1705,11 +1696,14 @@ var PainterSave = {
 		}
 	},
 	verify_and_send_order:function(){
+		
+		console.log("btnSend");
+
 		this.now_sending(true);	
 		var msg_err = this.get_wrong_user_inputs();
 		if(!msg_err){
 			this.send_order();			
-		}else{
+		}else{			
 			this.now_sending(false);	
 			this.show_wrong_order(msg_err);
 		}
@@ -1730,8 +1724,7 @@ var PainterSave = {
 		this.ORDER.texture = PainterThemes.get_current_texture_name();
 		this.ORDER.lines = PainterThemes.get_current_lines_color();
 		this.ORDER.model = PainterModel.get_current_name();
-		this.send_mail(this.ORDER,{onReady:()=>{
-			this.now_sending(false);
+		this.send_mail(this.ORDER,{onReady:()=>{						
 			this.$fromName.html(this.ORDER.name);
 			this.$fromPhone.html(this.ORDER.phone);
 			this.$itemModel.html(this.ORDER.model);
@@ -1739,13 +1732,11 @@ var PainterSave = {
 			this.$itemTexture.html(this.ORDER.texture);
 			this.$itemLines.html(this.ORDER.lines);			
 			this.show_page_ok();			
+			this.now_sending(false);			
 		}});	
 
 	},
 	send_mail:function(order,opt) {
-
-		
-		
 
 		var preview = new Promise(resolve => Painter.$canvas[0].toBlob(resolve,'image/jpg') );
 		var lekalo = new Promise(resolve => Painter.get_image_lekalo().toBlob(resolve,'image/jpg') );
@@ -1755,13 +1746,15 @@ var PainterSave = {
 			var formData = new FormData();		
 
 	  		formData.append("previewImage", images[0], "preview.jpg");
-	  		formData.append("previewLekalo", images[1], "lekalo.jpg");
+	  		formData.append("previewLekalo", images[1], "lekalo.jpg");	  			  		
+
 		    formData.append("firstName", this.ORDER.name);
 		    formData.append("phone", this.ORDER.phone);
 		    formData.append("model", this.ORDER.model);
 		    formData.append("size", this.ORDER.size);
 		    formData.append("lines", this.ORDER.lines);
 		    formData.append("texture", this.ORDER.texture);
+
 
 	       $.ajax({
 	            url: "send_order.php",
@@ -1770,12 +1763,29 @@ var PainterSave = {
 	            processData: false,
 	            contentType: false,
 	            success:(res)=>{
-	                console.log('res',res)
-	                opt&&opt.onReady&&opt.onReady(res);
+	            	try{
+
+	            		var r = JSON.parse(res);
+		            	if(r['err']!==undefined){
+		            		console.log(r)
+		            		console.log(r['err'])
+							this.now_sending(false);	
+							this.show_wrong_order("1. Не удается отправить заказ. Сохраните эскиз на компьютер.");	            		
+		            	}else{
+		            		opt&&opt.onReady&&opt.onReady(res);
+		            	}
+
+	            	}catch(e){
+
+							this.now_sending(false);	
+							this.show_wrong_order("3. Не удается отправить заказ. Сохраните эскиз на компьютер.");	            		
+
+	            	}
+
 	            },
-	            error:()=>{
+	            error:()=>{	            	
 					this.now_sending(false);	
-					this.show_wrong_order("Не удается отправить заказ. Сохраните эскиз на компьютер.");
+					this.show_wrong_order("2. Не удается отправить заказ. Сохраните эскиз на компьютер.");
 	            }
 	        });		    
 
@@ -1787,6 +1797,7 @@ var PainterSave = {
 
 	},
 	open_win_make_order:function(){		
+		console.log("btnMakeOrder");
 		this.set_page_current(1);
 	},	
 	choose_size:function(index) {
@@ -1798,29 +1809,28 @@ var PainterSave = {
 	},
 	behavior:function(){
 		var _this=this;
-
-		// this.$btnSaveAndClose.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.save_image_and_close();});		
-		this.$btnMakeOrder.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.open_win_make_order();});
-		this.$btnSendOrder.on("touchend, click",(e)=>{ !this.NOW_SENDING && this.verify_and_send_order();});
+		
+		this.$btnMakeOrder.on("touchend, click",(e)=>{  !this.NOW_SENDING && this.open_win_make_order();});
+		this.$btnSendOrder.on("touchend, click",(e)=>{  !this.NOW_SENDING && this.verify_and_send_order();});
 		this.$btnSize.each(function(index) {
 			$(this).on("touchend, click",(e)=>{ !_this.NOW_SENDING && _this.choose_size(index);});
 		});
 		
-		this.$btnSave.on("touchend, click",(e)=>{ this.open_win(); });
-		this.$btnClose.on("touchend, click",(e)=>{  this.close_win(); });
-		this.$btnSave.hover(()=>{this.IS_HOVER=true;},()=>{this.IS_HOVER=false;});
+		this.$btnSave.on("touchend, click",(e)=>{ console.log("btnSave"); this.open_win(); });
+		this.$btnClose.on("touchend, click",(e)=>{  console.log("btnClose"); this.close_win(); });
+		this.$btnSave.hover(()=>{ this.IS_HOVER=true;},()=>{ this.IS_HOVER=false;});
 	},
 	open_win:function(){
 		this.WIN_VISIBLE = true;
 		this.reset_form();
 		this.set_page_current(0);
 		this.$btnSave.hide();
-		this.$saveWin.show();
-		this.TMR_WIN && clearTimeout(this.TMR_WIN);
+		this.$saveWin.show();			
+		 this.TMR_WIN && clearTimeout(this.TMR_WIN);
 		this.TMR_WIN = setTimeout(()=>{
 			this.$saveWin.addClass("shown");
-			this.say("changed-visibility");			
-		},0);
+			this.say("changed-visibility");
+		},50);
 	},
 	close_win:function(){
 		this.WIN_VISIBLE = false;		

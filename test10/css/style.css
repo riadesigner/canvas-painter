@@ -163,6 +163,10 @@ body{
 #painter-loader .content .message p{margin: 0 0 8px 0;line-height: 1.4;font:.9rem arial;}
 
 
+#painter-save-win.now-sending .order-button{opacity: .3;cursor: default;}
+#painter-save-win.now-sending .size-btns{opacity: .3;cursor: default;}
+
+
 @keyframes loader-ani{ 100%{transform: rotate(359deg);}}
 
 #painter-save-win .page-ok h2{font: 1.2rem arial; color:white;}
