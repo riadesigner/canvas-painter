@@ -138,6 +138,16 @@ var Painter = {
 		this.user_canvas.width = this.CANVAS_WIDTH;
 		this.user_canvas.height = this.CANVAS_HEIGHT;
 
+		this.lekalo_canvas = document.createElement('canvas');
+		this.lekalo_ctx = this.lekalo_canvas.getContext('2d');
+		this.lekalo_canvas.width = this.CANVAS_WIDTH;
+		this.lekalo_canvas.height = this.CANVAS_HEIGHT;		
+
+		this.export_canvas = document.createElement('canvas');
+		this.export_ctx = this.export_canvas.getContext('2d');
+		this.export_canvas.width = this.CANVAS_WIDTH;
+		this.export_canvas.height = this.CANVAS_HEIGHT;				
+
 		this.PARAM.onready && this.PARAM.onready();	
 		this.CANCELSYSTEM.make_snapshot(this.user_canvas);
 		this.set_status('загрузка...');
@@ -193,7 +203,39 @@ var Painter = {
 		var size = this.calc_model_size(img);
 		this.model_ctx.clearRect(0, 0,size.w,size.h);
 		this.model_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );		
-	},	
+	},
+	get_image_lekalo:function() {
+		
+		var img = this.models.get_mask();		
+		var size = this.calc_model_size(img);
+		
+		this.lekalo_ctx.drawImage(this.masked_canvas, 0, 0);
+		this.lekalo_ctx.clearRect(0, 0,size.w,size.h);
+		this.lekalo_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );					
+		this.lekalo_ctx.save();
+		this.lekalo_ctx.globalCompositeOperation='destination-in';			
+		this.lekalo_ctx.drawImage(this.user_canvas, 0, 0);
+		this.lekalo_ctx.restore();
+		this.lekalo_ctx.save();
+		this.lekalo_ctx.globalCompositeOperation='xor';			
+		this.lekalo_ctx.drawImage(this.lekalo_canvas, 1, 1);
+		this.lekalo_ctx.restore();
+		
+		this.export_ctx.clearRect(0, 0,size.w,size.h);
+		this.export_ctx.drawImage(img, 0, 0, img.width, img.height, size.left, size.top, size.im_w, size.im_h );
+		this.export_ctx.save();
+		this.export_ctx.globalCompositeOperation='xor';
+		this.export_ctx.drawImage(img, 1, 1, img.width+1, img.height+1, size.left, size.top, size.im_w, size.im_h );
+		this.export_ctx.restore();
+		this.export_ctx.drawImage(this.lekalo_canvas, 1, 1);
+		
+		this.lekalo_ctx.fillStyle = "white";
+		this.lekalo_ctx.fillRect(0, 0,size.w,size.h);
+		this.lekalo_ctx.drawImage(this.export_canvas,0,0);
+	
+		return this.lekalo_canvas;
+
+	},
 	calc_model_size:function(img){
 		var w = this.$canvas[0].width;
 		var h = this.$canvas[0].height;
@@ -413,7 +455,10 @@ var Painter = {
 		$(this.models).on('onchanged',(index)=>{ this.model_changed(index); });
 
 		$(this.saveSystem).on('changed-visibility',(e)=>{
-			if(this.saveSystem.is_opened()){
+			if(this.saveSystem.is_opened()){				
+				_this.BRUSH.set_current(false);
+				_this.ZOOM.change_preview_mode(true);
+				_this.updated_preview_mode();
 				this.update_link_to_save_pict();
 			}			
 		});
@@ -424,10 +469,16 @@ var Painter = {
 		// var dataURL = this.$canvas[0].toDataURL("image/png");
 		// var newTab = window.open('about:blank','Эскиз тельняшки');
 		// newTab.document.write("<img src='" + dataURL + "' alt='эскиз тельняшки'/>");
+		///xxxx
+		// 
+		// PainterZoom.change_preview_mode(true);
+		
 
-		var dataURL = this.$canvas[0].toDataURL("image/png");
-		var newdata = dataURL.replace(/^data:image\/png/,'data:application/octet-stream');	    
-	    this.saveSystem.set_pict_to_save(newdata);
+		var dataURL_preview = this.$canvas[0].toDataURL("image/png");
+		// var dataURL_lekalo = this.get_image_lekalo().toDataURL("image/png");
+
+		var previewImage = dataURL_preview.replace(/^data:image\/png/,'data:application/octet-stream');	    
+	    this.saveSystem.set_pict_to_save(previewImage);
 
 
 	},
@@ -1674,21 +1725,66 @@ var PainterSave = {
 		this.$itemTexture.html("");
 		this.$itemLines.html("");
 	},
-	send_order:function() {
-
-		var texture = PainterThemes.get_current_texture_name();
-		var lines = PainterThemes.get_current_lines_color();
-		console.log('texture,lines',texture,lines)
-		setTimeout(()=>{
+	send_order:function() {		
+		 
+		this.ORDER.texture = PainterThemes.get_current_texture_name();
+		this.ORDER.lines = PainterThemes.get_current_lines_color();
+		this.ORDER.model = PainterModel.get_current_name();
+		this.send_mail(this.ORDER,{onReady:()=>{
 			this.now_sending(false);
 			this.$fromName.html(this.ORDER.name);
 			this.$fromPhone.html(this.ORDER.phone);
-			this.$itemModel.html(PainterModel.get_current_name());
+			this.$itemModel.html(this.ORDER.model);
 			this.$itemSize.html(this.ORDER.size);
-			this.$itemTexture.html(texture);
-			this.$itemLines.html(lines);			
-			this.show_page_ok();
-		},1000);		
+			this.$itemTexture.html(this.ORDER.texture);
+			this.$itemLines.html(this.ORDER.lines);			
+			this.show_page_ok();			
+		}});	
+
+	},
+	send_mail:function(order,opt) {
+
+		
+		
+
+		var preview = new Promise(resolve => Painter.$canvas[0].toBlob(resolve,'image/jpg') );
+		var lekalo = new Promise(resolve => Painter.get_image_lekalo().toBlob(resolve,'image/jpg') );
+
+		Promise.all([preview, lekalo]).then((images) => {			
+			
+			var formData = new FormData();		
+
+	  		formData.append("previewImage", images[0], "preview.jpg");
+	  		formData.append("previewLekalo", images[1], "lekalo.jpg");
+		    formData.append("firstName", this.ORDER.name);
+		    formData.append("phone", this.ORDER.phone);
+		    formData.append("model", this.ORDER.model);
+		    formData.append("size", this.ORDER.size);
+		    formData.append("lines", this.ORDER.lines);
+		    formData.append("texture", this.ORDER.texture);
+
+	       $.ajax({
+	            url: "send_order.php",
+	            type: "POST",
+	            data: formData,
+	            processData: false,
+	            contentType: false,
+	            success:(res)=>{
+	                console.log('res',res)
+	                opt&&opt.onReady&&opt.onReady(res);
+	            },
+	            error:()=>{
+					this.now_sending(false);	
+					this.show_wrong_order("Не удается отправить заказ. Сохраните эскиз на компьютер.");
+	            }
+	        });		    
+
+
+		});
+
+      
+
+
 	},
 	open_win_make_order:function(){		
 		this.set_page_current(1);
