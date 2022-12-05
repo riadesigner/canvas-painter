@@ -5,7 +5,7 @@ $arr_emails = json_decode(file_get_contents($nm));
 
 
 $mail_to  = isset($arr_emails->mail_to)?$arr_emails->mail_to:"";
-$copy_to = isset($arr_emails->mail_to)?$arr_emails->mail_to:"";
+$copy_to = isset($arr_emails->copy_to)?$arr_emails->copy_to:"";
 
 if($mail_to==""){
     echo json_encode(array("err"=>"wrong emails"));
@@ -40,8 +40,6 @@ require_once 'vendor/autoload.php';
 
 $username = "cyberbrandvl@yandex.ru";
 $password = "LS8OGs";
-$send_to = "e.pogrebnyak@mail.ru";
-$send_copy_to = "e.pogrebnyak@yandex.ru";
 
 $mail = new PHPMailer();
 $mail->CharSet = 'UTF-8';
@@ -61,10 +59,10 @@ $mail->Password = $password; // ваш пароль;
 $mail->setFrom($username, 'Конструктор Goranskaya');
 
 // кому - получатель письма
-$mail->addAddress($send_to, 'Дизайнеру');  // кому
+$mail->addAddress($mail_to, 'Дизайнеру');  // кому
 
-if(isset($send_copy_to))
-$mail->AddCC($send_copy_to, 'Тестировщик');  // кому
+if(isset($copy_to))
+$mail->AddCC($copy_to, 'Тестировщик');  // кому
 
 $mail->Subject = 'Конструктор. Заказ с сайта!';  // тема письма
 
