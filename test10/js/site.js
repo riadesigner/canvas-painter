@@ -1772,6 +1772,7 @@ var PainterSave = {
 							this.now_sending(false);	
 							this.show_wrong_order("1. Не удается отправить заказ. Сохраните эскиз на компьютер.");	            		
 		            	}else{
+		            		console.log(r)
 		            		opt&&opt.onReady&&opt.onReady(res);
 		            	}
 

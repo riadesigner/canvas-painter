@@ -73,7 +73,7 @@ $mail->AddAttachment($_FILES['previewLekalo']['tmp_name'],$_FILES['previewLekalo
 $mail->msgHTML("<html><body>{$str}</html></body>");
 
 if ($mail->send()) { // отправляем письмо    
-    echo json_encode(array("OK!!!"));
+    echo json_encode(array("OK!!!"=>"$mail_to,$copy_to"));
 } else {
     echo json_encode(array("err"=>$mail->ErrorInfo));    
 }
